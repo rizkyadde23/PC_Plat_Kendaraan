@@ -1,0 +1,115 @@
+
+# ==========================================
+# PYTHON
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Python build
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual Environment
+.venv/
+venv/
+env/
+ENV/
+
+# Python testing & coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# ==========================================
+# ENVIRONMENT & SECRETS
+# ==========================================
+.env
+.env.*
+!.env.example
+
+.streamlit/secrets.toml
+
+# ==========================================
+# DATASET
+# ==========================================
+# Dataset Roboflow
+data/raw/*
+data/interim/*
+data/processed/*
+
+# OCR annotations and generated splits
+data/annotations/
+data/splits/
+
+# ==========================================
+# MACHINE LEARNING MODELS
+# ==========================================
+# Pretrained models
+models/pretrained/*
+
+# Trained models
+models/trained/*
+
+# Model weights
+*.pt
+*.pth
+*.onnx
+*.engine
+*.h5
+*.keras
+
+# ==========================================
+# EXPERIMENT OUTPUTS
+# ==========================================
+outputs/predictions/*
+outputs/visualizations/*
+outputs/reports/*
+
+# Training runs
+runs/
+wandb/
+mlruns/
+
+# ==========================================
+# LOGS
+# ==========================================
+*.log
+logs/
+
+# ==========================================
+# TEMPORARY FILES
+# ==========================================
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
+# ==========================================
+# OPERATING SYSTEM
+# ==========================================
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ==========================================
+# IDE & EDITOR
+# ==========================================
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.code-workspace
+
+# ==========================================
+# STREAMLIT
+# ==========================================
+.streamlit/cache/
