@@ -26,7 +26,7 @@ Dokumen ini mencatat sumber, lisensi, metadata, hasil audit lokal, dan kebijakan
   - Hasil konversi, pembersihan, subset, anotasi turunan, atau preprocessing disimpan di direktori terpisah: `data/interim/`, `data/processed/`, `data/annotations/`, `data/splits/`.
   - Dataset mentah dan data turunan berukuran besar **tidak dimasukkan ke Git** (lihat `.gitignore`).
 
-## 3. Struktur Aktual (hasil audit lokal)
+## 3. Struktur Aktual
 
 Direktori utama:
 - `train/images/`, `train/labels/`
@@ -36,13 +36,13 @@ Direktori utama:
 - `README.dataset.txt`, `README.roboflow.txt`
 
 Konfigurasi `data.yaml` (Roboflow):
-- `train: ../train/images`, `val: ../valid/images`, `test: ../test/images` (path relatif terhadap lokasi `data.yaml`)
+- `train: ../train/images`, `val: ../valid/images`, `test: ../test/images` (path relatif bawaan ekspor)
 - `nc: 1`
 - `names: ['License-Plate']`
 
-**Catatan kompatibilitas:** Struktur `images/labels` per split dan format label YOLO umumnya kompatibel dengan Ultralytics YOLO. Resolusi path `data.yaml` bawaan perlu diperhatikan saat training/inferensi (bergantung working directory / cara pemanggilan) tanpa mengubah file di `data/raw`.
+**Catatan kompatibilitas (audit formal):** pada pemeriksaan resolusi path, entri `train/val/test` di `data.yaml` **tidak resolve** dari lokasi `data.yaml` maupun dari root dataset dengan interpretasi path mentah sebagaimana tertulis; struktur aktual dataset berada di `data/raw/indonesian_license_plate/{train,valid,test}/images`. Saat training/inferensi Ultralytics, pastikan resolusi path yang digunakan benar (mis. jalankan dari direktori yang sesuai atau gunakan konfigurasi/path kerja turunan) **tanpa mengubah file di `data/raw/`**.
 
-## 4. Jumlah Data Aktual (audit lokal)
+## 4. Jumlah Data Aktual (audit formal)
 
 | Split | Gambar | Label | Ekstensi |
 |---|---:|---:|---|
@@ -56,7 +56,10 @@ Konfigurasi `data.yaml` (Roboflow):
 - **Tipe tugas:** Object Detection (plat nomor kendaraan)
 - **Format label:** YOLO (`class_id x_center y_center width height`, nilai ternormalisasi)
 - **Jumlah kelas:** 1 (`License-Plate`, class id `0`)
-- **Contoh baris label:** `0 0.5 0.45625 0.978125 0.9125`
+- **Distribusi objek per gambar (audit formal):**
+  - train: {1: 861, 2: 75, 3: 50, 4: 53, 5: 24, 6: 12, 7: 3, 8: 3, 9: 2, 0: 2} (total 1628 objek)
+  - valid: {1: 85, 2: 6, 3: 6, 4: 7, 7: 1, 9: 1, 0: 1} (total 159 objek)
+  - test: {1: 48, 2: 1, 3: 2, 6: 1, 0: 1} (total 62 objek)
 
 ## 6. Preprocessing & Augmentasi (sesuai metadata ekspor Roboflow)
 
@@ -64,25 +67,44 @@ Diterapkan pada versi dataset yang diekspor (bukan data mentah asli):
 - **Preprocessing:** auto-orientation (EXIF-orientation stripped), resize stretch ke **640×640**, grayscale (CRT phosphor)
 - **Augmentasi:** pembuatan **3 versi per source image** dengan random Gaussian blur **0–2.5 px**
 
-Implikasi: karakteristik data (grayscale, resolusi seragam, blur augmentasi) perlu dipertimbangkan dalam strategi preprocessing dan evaluasi model.
+**Catatan audit formal (properti gambar teramati):** seluruh gambar dapat didecode, berukuran **640×640** dan terbaca sebagai **3 channel** (BGR/3ch) oleh OpenCV, meskipun metadata ekspor menyebutkan grayscale. Hal ini perlu diperhatikan saat merancang pipeline preprocessing.
 
-## 7. Temuan Audit Awal (Milestone 1, pemeriksaan read-only)
+## 7. Temuan Audit Formal (Milestone 3)
 
-- **Konsistensi pasangan file:** tidak ditemukan image tanpa label atau label tanpa image (berdasarkan kecocokan basename per split).
-- **Validasi format/nilai label dasar (scan teks):** tidak ditemukan jumlah kolom ≠ 5, `class_id != 0`, atau nilai bbox di luar rentang `(0, 1]`.
-- **Label kosong (0 byte, 4 file):** perlu verifikasi visual (dalam YOLO dapat berarti no-object/background, namun perlu dikonfirmasi konteksnya):
+- **Run audit:** `20261118_210535` (script: `scripts/audit_dataset.py`)
+- **Laporan:** `outputs/reports/dataset_audit/20261118_210535/` (`report.md`, `report.json`, `issues.csv`, `duplicates.csv`, `duplicates.json`)
+- **Visualisasi sampel:** `outputs/visualizations/dataset_audit/20261118_210535/`
+- **Status:** **`READY_WITH_WARNINGS`** (ERROR=0, WARNING=381, INFO=1)
+
+### 7.1 Konsistensi & validitas
+- **Pairing image-label:** tidak ada image tanpa label dan tidak ada label tanpa image (semua split).
+- **Keterbacaan gambar:** 0 gambar corrupt/unreadable (full decode seluruh 1245 file).
+- **Validasi label:** 0 file label invalid (format/kolom/class/bbox dalam rentang valid). Statistik bbox tercatat dalam laporan JSON.
+- **Label kosong (4 file, WARNING — perlu verifikasi visual):**
   - `train/labels/helm_045_jpg.rf.3eafc00e8cc8ac1e40858a7df61f2429.txt`
   - `train/labels/helm_045_jpg.rf.c31448415f7ac963a7423202c75e9feb.txt`
   - `valid/labels/99_E-2984-TW-04-18_jpg.rf.b1a1a2d9ea7528f302fe97c14a4f1091.txt`
   - `test/labels/helm_047_jpg.rf.fe6ed6f023c55690a6cd60da208be8b6.txt`
-- **Duplikasi gambar (hash MD5 identik):** terdeteksi **374 kelompok duplikat** pada pemeriksaan awal. Pola nama/varian konsisten dengan augmentasi 3-versi, namun **distribusi intra-split vs lintas-split dan dampaknya terhadap evaluasi/leakage belum dikonfirmasi sepenuhnya** dan perlu analisis lanjutan pada audit skrip.
-- **Korupsi gambar:** belum diverifikasi menyeluruh melalui decode seluruh file; akan diperiksa pada audit dataset formal (Milestone 3).
-- **Ground truth teks OCR:** **tidak tersedia** di dataset ini. Label yang ada adalah bounding box deteksi, bukan transkripsi karakter plat. Evaluasi OCR kuantitatif (CER/WER/Exact Match) memerlukan anotasi teks terpisah pada subset yang tervalidasi (disimpan di `data/annotations/ocr/`, bukan di `data/raw/`).
 
-## 8. Kesiapan & Tindak Lanjut
+### 7.2 Duplikasi (MD5, byte-identik)
+- **Total grup duplikat:** 374
+- **Duplikat lintas-split:** **0 grup** (tidak terdeteksi) — tidak ada indikasi leakage antar split berdasarkan hash identik.
+- **Duplikat intra-split:** **374 grup** (WARNING, over-representasi), melibatkan **1085 file**.
+- Detail lengkap anggota grup tersedia pada `duplicates.csv`/`duplicates.json` di folder laporan run.
 
-- **Status awal:** dataset **ditemukan** dan format dasarnya **kompatibel** untuk deteksi YOLO (1 kelas), namun **belum dinyatakan final siap latih** sebelum audit formal meliputi verifikasi visual bbox/label kosong, analisis duplikat lintas-split, uji baca gambar, dan penegasan strategi penggunaan `data.yaml`.
-- **Rencana audit formal:** `scripts/audit_dataset.py` (Milestone 3) akan menghasilkan laporan terperinci ke `outputs/reports/` tanpa memodifikasi `data/raw/`.
+### 7.3 Kompatibilitas & metadata
+- **`data.yaml`:** terbaca (nc=1, names=['License-Plate']), namun terdapat **3 warning** terkait resolusi path relatif bawaan (`train/val/test`) terhadap lokasi yaml/root dataset (lihat §3).
+- **Ground truth teks OCR:** **tidak tersedia**. Label hanya berupa bounding box deteksi; evaluasi OCR kuantitatif (CER/WER/Exact Match) memerlukan anotasi teks terpisah pada subset tervalidasi (disimpan di `data/annotations/ocr/`, bukan di `data/raw/`).
+
+## 8. Kesiapan & Rekomendasi Tindak Lanjut
+
+- **Status kesiapan (Milestone 3):** **`READY_WITH_WARNINGS`** — tidak ada ERROR blocking (tidak ada corrupt, label invalid, pairing error, atau duplikat lintas-split), namun terdapat warning yang perlu diperhatikan.
+- **Rekomendasi sebelum/selama Milestone 4 (Dataset Preparation):**
+  - Lakukan **verifikasi visual** pada 4 label kosong dan sampel anotasi (lihat visualisasi audit) untuk memastikan makna no-object vs anotasi hilang.
+  - Pertimbangkan dampak **duplikat intra-split** (over-representasi) saat pelatihan/evaluasi; jika diperlukan penanganan (deduplikasi/subset), lakukan pada data turunan/split kerja di `data/interim/`, `data/processed/`, atau `data/splits/` — **bukan** pada `data/raw/`.
+  - **Pertahankan split bawaan** train/valid/test kecuali ada alasan teknis jelas dan terdokumentasi; pastikan tidak ada kebocoran data.
+  - Siapkan strategi **ground truth OCR** (subset anotasi teks manual tervalidasi) untuk evaluasi pengenalan karakter.
+  - Saat menggunakan `data.yaml` untuk training, pastikan path dataset ter-resolve dengan benar dari lingkungan eksekusi (konfigurasi turunan bila perlu, tanpa mengubah `raw/`).
 
 ## 9. Atribusi
 
