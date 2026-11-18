@@ -1,0 +1,28 @@
+# Konfigurasi aplikasi ALPRO (Milestone 2 - kerangka)
+# Path relatif terhadap root proyek kecuali dinyatakan lain.
+
+app:
+  name: "ALPRO"
+  description: "Automatic License Plate Recognition Online"
+  language: "id"
+
+paths:
+  data_raw: "data/raw/indonesian_license_plate"
+  data_interim: "data/interim"
+  data_processed: "data/processed"
+  annotations_detection: "data/annotations/detection"
+  annotations_ocr: "data/annotations/ocr"
+  splits: "data/splits"
+  models_pretrained: "models/pretrained"
+  models_trained: "models/trained"
+  outputs_predictions: "outputs/predictions"
+  outputs_visualizations: "outputs/visualizations"
+  outputs_reports: "outputs/reports"
+
+runtime:
+  device: "cpu"        # 2C: CPU-first; ubah ke "cuda" jika environment GPU siap
+  log_level: "INFO"
+
+ui:
+  # app.py akan dibuat pada Milestone 9 (keputusan 4C)
+  entrypoint_planned: "app.py"

@@ -1,0 +1,32 @@
+# Konfigurasi preprocessing citra (kerangka eksperimen)
+# Teknik final dipilih berdasarkan eksperimen (Milestone 6), bukan asumsi.
+
+pipeline:
+  # Urutan & aktivasi tahap akan ditentukan saat implementasi/eksperimen
+  steps:
+    - name: grayscale
+      enabled: true
+    - name: resize
+      enabled: false
+      width: 320
+      keep_aspect: true
+    - name: denoise
+      enabled: false
+      method: "gaussian"   # gaussian | median | bilateral
+      ksize: 3
+    - name: contrast
+      enabled: false
+      method: "clahe"
+      clip_limit: 2.0
+      tile_grid_size: [8, 8]
+    - name: threshold
+      enabled: false
+      method: "otsu"        # otsu | adaptive
+    - name: morphology
+      enabled: false
+      operation: "close"    # open | close
+      ksize: [3, 3]
+
+debug:
+  save_intermediate: false
+  output_dir: "outputs/visualizations/preprocessing"

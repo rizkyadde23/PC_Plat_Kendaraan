@@ -1,0 +1,25 @@
+# ALPRO - Baseline dependencies (Milestone 2)
+# Strategi versi: 3C (hybrid) -> gunakan range/constraint wajar di file ini,
+# lalu catat versi aktual terpasang setelah instalasi/verifikasi environment.
+# Target komputasi awal: 2C (CPU-first). Untuk CUDA, sesuaikan instalasi PyTorch
+# sesuai GPU/driver sebelum menginstal/menjalankan Ultralytics bila diperlukan.
+
+# Core scientific & config
+numpy>=1.24,<3
+pandas>=2.0
+PyYAML>=6.0
+
+# Computer vision & OCR
+opencv-python>=4.8
+ultralytics>=8.0
+easyocr>=1.7
+
+# UI
+streamlit>=1.30
+
+# Evaluation & visualization
+matplotlib>=3.7
+jiwer>=3.0
+
+# Testing
+pytest>=7.4

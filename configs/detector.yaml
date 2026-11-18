@@ -1,0 +1,26 @@
+# Konfigurasi detektor plat (kerangka, belum final)
+# Nilai final ditentukan setelah audit dataset dan eksperimen baseline.
+
+dataset:
+  yaml: "data/raw/indonesian_license_plate/data.yaml"
+  # Catatan: data.yaml bawaan Roboflow menggunakan path relatif (../train/images, dll).
+  # Pastikan resolusi path saat training/inferensi; jangan mengubah file di data/raw.
+
+model:
+  framework: "ultralytics-yolo"
+  baseline_weights: "yolo11n.pt"   # kandidat baseline; dapat disesuaikan saat Milestone 5
+  trained_dir: "models/trained"
+
+inference:
+  conf_threshold: 0.25
+  iou_threshold: 0.45
+  imgsz: 640
+  device: "cpu"
+  max_detections: 10
+
+training:
+  # Placeholder eksperimen baseline (belum dijalankan di Milestone 2)
+  epochs: 50
+  batch: 16
+  imgsz: 640
+  patience: 20

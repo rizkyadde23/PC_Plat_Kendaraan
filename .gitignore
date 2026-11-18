@@ -34,7 +34,7 @@ htmlcov/
 # ==========================================
 .env
 .env.*
-!.env.example
+.env.example
 
 .streamlit/secrets.toml
 
@@ -47,8 +47,17 @@ data/interim/*
 data/processed/*
 
 # OCR annotations and generated splits
-data/annotations/
-data/splits/
+data/annotations/*
+data/splits/*
+
+# Keep empty directory markers (structure tracking)
+!data/interim/.gitkeep
+!data/processed/.gitkeep
+!data/annotations/detection/
+!data/annotations/ocr/
+!data/annotations/detection/.gitkeep
+!data/annotations/ocr/.gitkeep
+!data/splits/.gitkeep
 
 # ==========================================
 # MACHINE LEARNING MODELS
@@ -58,6 +67,10 @@ models/pretrained/*
 
 # Trained models
 models/trained/*
+
+# Keep empty directory markers
+!models/pretrained/.gitkeep
+!models/trained/.gitkeep
 
 # Model weights
 *.pt
@@ -73,6 +86,11 @@ models/trained/*
 outputs/predictions/*
 outputs/visualizations/*
 outputs/reports/*
+
+# Keep empty directory markers
+!outputs/predictions/.gitkeep
+!outputs/visualizations/.gitkeep
+!outputs/reports/.gitkeep
 
 # Training runs
 runs/
