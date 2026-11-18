@@ -1,83 +1,90 @@
-# Konteks Proyek ALPR
+# Konteks Proyek ALPRO
 
 ## 1. Identitas proyek
 
-| Elemen | Keterangan |
-|---|---|
-| Nama sementara | ALPR — Automatic License Plate Recognition |
-| Mata kuliah | Pengolahan Citra Digital |
-| Program studi | Informatika |
-| Tahun akademik | 2026/2027 |
-| Bahasa pemrograman | Python |
-| Bentuk aplikasi | Aplikasi desktop/web lokal berbasis Streamlit |
-| Fokus pengerjaan saat ini | Perangkat lunak aplikasi |
-| Domain masalah | Transportasi dan pengolahan citra |
+| Elemen             | Keterangan                                             |
+| ------------------ | ------------------------------------------------------ |
+| Nama proyek        | **ALPRO — Automatic License Plate Recognition Online** |
+| Mata kuliah        | Pengolahan Citra Digital                               |
+| Program studi      | Informatika                                            |
+| Tahun akademik     | 2026/2027                                              |
+| Bahasa pemrograman | Python                                                 |
+| Bentuk aplikasi    | Aplikasi lokal berbasis web menggunakan Streamlit      |
+| Fokus pengerjaan   | Pengembangan perangkat lunak aplikasi                  |
+| Domain masalah     | Transportasi dan pengolahan citra                      |
 
-Nama, anggota kelompok, dosen pengampu, dan detail administratif dapat ditambahkan setelah ditetapkan kelompok.
+Nama anggota kelompok, NIM, dosen pengampu, dan informasi administratif dapat ditambahkan setelah ditetapkan.
 
 ## 2. Latar belakang
 
-Plat nomor kendaraan merupakan rangkaian karakter alfanumerik yang ditampilkan pada kendaraan. Membaca plat dari gambar secara manual membutuhkan perhatian pengguna dan dapat menjadi kurang praktis ketika gambar berjumlah banyak. Pengolahan citra digital dan computer vision dapat digunakan untuk membantu menemukan area plat dan membaca karakter di dalamnya.
+Plat nomor kendaraan merupakan rangkaian karakter alfanumerik yang digunakan sebagai identitas registrasi kendaraan. Membaca plat dari gambar secara manual membutuhkan perhatian pengguna. Pengolahan citra digital dan computer vision dapat membantu menemukan area plat dan membaca karakter yang terdapat di dalamnya.
 
-Proyek ini mengembangkan prototipe aplikasi yang memproses gambar kendaraan melalui tahapan deteksi area plat, pemotongan citra, prapemrosesan, dan pengenalan teks menggunakan OCR.
+ALPRO dikembangkan sebagai aplikasi pengenalan plat kendaraan dari gambar. Sistem menggabungkan deteksi objek, prapemrosesan citra, dan Optical Character Recognition (OCR) dalam satu alur aplikasi yang dapat diperiksa tahap demi tahap.
 
-## 3. Permasalahan yang ditangani
+## 3. Permasalahan
 
-Permasalahan utama proyek adalah bagaimana membangun aplikasi Python yang dapat:
-1. Menemukan lokasi plat nomor pada gambar kendaraan.
-2. Menyiapkan area plat agar karakter lebih mudah dikenali.
-3. Membaca karakter plat menggunakan OCR.
-4. Menampilkan hasil proses secara transparan.
-5. Mengukur kinerja deteksi dan pengenalan teks menggunakan data uji berlabel.
+Proyek berfokus pada pertanyaan bagaimana membangun aplikasi Python yang mampu:
 
-Kinerja sistem dapat dipengaruhi oleh pencahayaan, resolusi, sudut pengambilan gambar, blur, noise, kontras, occlusion, dan variasi bentuk/warna plat.
+1. Mendeteksi lokasi plat nomor pada gambar kendaraan.
+2. Mengambil area plat dari gambar.
+3. Menerapkan prapemrosesan citra agar karakter lebih mudah dikenali.
+4. Membaca karakter plat menggunakan OCR.
+5. Menampilkan hasil dan tahapan pemrosesan kepada pengguna.
+6. Mengevaluasi kinerja deteksi dan pengenalan teks secara terukur.
 
-## 4. Tujuan
+Hasil sistem dapat dipengaruhi oleh pencahayaan, resolusi, sudut pengambilan gambar, blur, noise, kontras, bagian plat yang tertutup, dan kualitas anotasi dataset.
 
-- Mengimplementasikan pipeline pengolahan citra untuk pengenalan plat nomor kendaraan.
+## 4. Tujuan proyek
+
+- Mengembangkan aplikasi pengenalan plat nomor kendaraan berbasis Python.
 - Menerapkan deteksi objek untuk menemukan area plat.
-- Menerapkan operasi prapemrosesan citra dan mengamati dampaknya terhadap OCR.
-- Mengintegrasikan OCR untuk memperoleh teks plat.
-- Membangun antarmuka aplikasi yang dapat digunakan untuk menguji gambar.
-- Mengevaluasi sistem secara kuantitatif dan kualitatif serta mendokumentasikan keterbatasannya.
+- Menerapkan teknik prapemrosesan citra menggunakan OpenCV.
+- Mengintegrasikan OCR untuk membaca karakter plat.
+- Menampilkan proses dan hasil melalui antarmuka aplikasi.
+- Mengukur performa sistem dengan skenario dan metrik yang sesuai.
+- Mendokumentasikan kesalahan, keterbatasan, dan peluang pengembangan.
 
 ## 5. Pengguna dan skenario penggunaan
 
-**Pengguna sasaran:** mahasiswa, dosen, atau pengguna demonstrasi yang ingin menguji pembacaan plat kendaraan dari gambar.
+**Pengguna sasaran:** mahasiswa, dosen, dan pengguna demonstrasi yang ingin menguji pembacaan plat dari gambar kendaraan.
 
 **Skenario utama:**
-1. Pengguna membuka aplikasi.
+
+1. Pengguna membuka aplikasi ALPRO.
 2. Pengguna mengunggah gambar kendaraan.
-3. Aplikasi menampilkan gambar masukan.
-4. Aplikasi mendeteksi area plat dan menampilkan bounding box.
-5. Aplikasi memotong area plat.
-6. Aplikasi menampilkan tahapan preprocessing.
-7. OCR menghasilkan prediksi teks.
-8. Aplikasi menampilkan hasil, confidence jika disediakan engine, dan status proses.
+3. Aplikasi memvalidasi dan menampilkan gambar.
+4. Model mendeteksi area plat dan menampilkan bounding box.
+5. Sistem memotong area plat.
+6. Sistem menjalankan prapemrosesan citra.
+7. OCR membaca teks pada area plat.
+8. Aplikasi menampilkan teks prediksi, confidence jika tersedia, dan visualisasi proses.
+9. Jika plat tidak terdeteksi atau OCR gagal, aplikasi menampilkan status yang sesuai.
 
 ## 6. Ruang lingkup
 
 ### Termasuk dalam ruang lingkup awal
+
 - Input gambar statis melalui upload.
 - Deteksi area plat kendaraan.
-- Cropping plat.
-- Prapemrosesan citra menggunakan OpenCV.
+- Cropping area plat.
+- Prapemrosesan menggunakan OpenCV.
 - Pengenalan teks menggunakan OCR.
-- Antarmuka berbasis Streamlit.
-- Evaluasi pada dataset berlabel.
-- Dokumentasi instalasi, penggunaan, eksperimen, dan hasil.
+- Antarmuka aplikasi berbasis Streamlit.
+- Pengujian perangkat lunak dan evaluasi model.
+- Dokumentasi dataset, source code, dan hasil eksperimen.
 
 ### Di luar ruang lingkup awal
-- Pengenalan kendaraan dari CCTV secara real-time.
+
+- Pemrosesan CCTV atau video real-time.
 - Pelacakan kendaraan antar-frame.
-- Integrasi ke sistem parkir, gerbang tol, atau sistem kepolisian.
-- Penyimpanan identitas pemilik kendaraan.
+- Integrasi ke sistem parkir, gerbang tol, atau kepolisian.
+- Identifikasi pemilik kendaraan.
 - Pengambilan keputusan hukum atau penindakan otomatis.
-- Jaminan akurasi untuk seluruh kondisi lapangan.
+- Jaminan akurasi pada seluruh kondisi lapangan.
 
-Fitur video atau kamera langsung dapat dipertimbangkan sebagai pengembangan lanjutan jika waktu dan sumber daya memungkinkan.
+Kata “Online” pada nama ALPRO merupakan identitas nama proyek dan tidak otomatis berarti aplikasi sudah di-deploy ke layanan publik atau mendukung pemrosesan real-time. Bentuk implementasi awal adalah aplikasi lokal berbasis web.
 
-## 7. Rancangan solusi
+## 7. Rancangan solusi dan teknologi
 
 Pipeline yang direncanakan:
 
@@ -103,87 +110,96 @@ OCR (EasyOCR sebagai baseline)
 Normalisasi teks
       |
       v
-Tampilan hasil dan evaluasi
+Tampilan hasil aplikasi
 ```
 
-### Pembagian tanggung jawab teknologi
+| Teknologi            | Tanggung jawab                         |
+| -------------------- | -------------------------------------- |
+| Python               | Bahasa pemrograman utama               |
+| OpenCV               | Membaca, memotong, dan memproses citra |
+| Ultralytics YOLO     | Kandidat framework deteksi plat        |
+| EasyOCR              | OCR baseline                           |
+| Streamlit            | Antarmuka pengguna                     |
+| NumPy dan Pandas     | Pengolahan data dan hasil evaluasi     |
+| Matplotlib           | Visualisasi eksperimen                 |
+| jiwer / scikit-learn | Metrik evaluasi yang sesuai            |
+| pytest               | Pengujian otomatis                     |
 
-| Teknologi | Peran |
-|---|---|
-| Python | Bahasa utama |
-| OpenCV | Membaca, memotong, dan memproses citra |
-| YOLO (kandidat) | Deteksi bounding box plat |
-| EasyOCR (baseline) | Pengenalan karakter |
-| Streamlit | Antarmuka pengguna |
-| NumPy/Pandas | Manipulasi array dan data evaluasi |
-| Matplotlib | Visualisasi hasil |
-| scikit-learn / jiwer | Metrik evaluasi yang sesuai |
-| pytest | Pengujian perangkat lunak |
+Versi model, parameter, dan dependency final ditetapkan setelah audit dataset dan eksperimen baseline.
 
-Pemilihan versi dan konfigurasi final akan ditentukan setelah pemeriksaan dataset, eksperimen baseline, dan pemeriksaan kompatibilitas lingkungan.
+## 8. Dataset utama
 
-## 8. Dataset
+ALPRO menggunakan satu sumber dataset utama yang telah diunduh oleh pengembang dalam bentuk ZIP:
 
-Dataset utama yang akan dieksplorasi adalah dataset plat Indonesia dari Roboflow Universe dan/atau Zenodo. Dataset UFPR-ALPR dapat dipertimbangkan sebagai sumber pembanding akademik, dengan memperhatikan bahwa datanya berasal dari Brasil dan ketentuan penggunaannya membatasi pemakaian serta redistribusi.
+**Indonesian_License_Plate — Roboflow Universe**  
+https://universe.roboflow.com/dataset-pyufc/indonesian_license_plate
 
-Sumber awal:
-- Indonesian License Plate (Roboflow): https://universe.roboflow.com/dataset-pyufc/indonesian_license_plate
-- Indonesian License Plate Detection Dataset (Zenodo): https://zenodo.org/records/15605718
-- UFPR-ALPR: https://web.inf.ufpr.br/vri/databases/ufpr-alpr/
-- Ketentuan UFPR-ALPR: https://web.inf.ufpr.br/vri/databases/ufpr-alpr/license-agreement/
+Dataset ini merupakan dataset object detection untuk mendeteksi area plat kendaraan Indonesia. Lisensi yang tercantum pada halaman proyek adalah **CC BY 4.0**. Atribusi dan ketentuan lisensi harus tetap dicantumkan ketika dataset atau hasil turunannya digunakan atau dibagikan.
 
-**Hal yang wajib diverifikasi sebelum dataset dipakai:**
-- Lisensi dan izin penggunaan.
-- Jumlah gambar dan versi dataset aktual.
-- Ketersediaan bounding box untuk deteksi.
-- Ketersediaan transkripsi teks untuk evaluasi OCR.
-- Distribusi kendaraan dan kondisi citra.
-- Duplikasi dan kualitas anotasi.
+Halaman versi dataset:
+https://universe.roboflow.com/dataset-pyufc/indonesian_license_plate/dataset/1
 
-Anotasi bounding box tidak sama dengan ground truth teks OCR. Jika teks plat tidak disediakan, tim perlu membuat anotasi teks pada subset yang digunakan untuk evaluasi OCR. Data harus dikelola sesuai lisensi dan pertimbangan privasi.
+Informasi pada halaman versi v1 mencantumkan tanggal pembuatan 15 Mei 2025, total 1.245 gambar, dengan pembagian train 1.085, valid 107, dan test 53. Halaman overview mencantumkan angka 534 gambar. Karena informasi jumlah pada halaman berbeda, jumlah aktual yang dipakai ALPRO harus ditentukan berdasarkan ZIP yang telah diunduh, file konfigurasi, dan hasil audit lokal.
+
+Halaman versi juga mencantumkan preprocessing Auto-Orient, resize stretch ke 640×640, dan grayscale serta augmentasi tertentu. Konfigurasi yang benar-benar berlaku harus diverifikasi terhadap versi ZIP yang diunduh.
+
+### Batasan dataset untuk OCR
+
+Dataset object detection menyediakan anotasi lokasi plat (bounding box). Anotasi tersebut tidak otomatis menyediakan teks plat sebagai ground truth. Oleh karena itu:
+
+- Dataset digunakan sebagai sumber utama untuk deteksi plat.
+- Ketersediaan transkripsi teks harus diperiksa.
+- Jika teks acuan tidak tersedia, tim perlu membuat anotasi manual pada subset evaluasi OCR.
+- Evaluasi OCR kuantitatif hanya dilakukan pada sampel yang memiliki teks acuan tervalidasi.
+
+Dataset disimpan secara lokal pada `data/raw/indonesian_license_plate/` setelah ZIP diekstrak. Dataset besar tidak dimasukkan ke Git. Catat tanggal unduh, versi, jumlah aktual, lisensi, dan konfigurasi dataset.
 
 ## 9. Metode evaluasi
 
-| Bagian | Metrik/analisis |
-|---|---|
-| Deteksi plat | Precision, recall, IoU, mAP jika sesuai |
-| Pengenalan teks | Character Error Rate (CER), Word Error Rate (WER), Exact Match Accuracy |
-| Kinerja aplikasi | Waktu pemrosesan, tingkat keberhasilan proses |
-| Analisis kualitatif | Contoh prediksi benar/salah dan kondisi citra yang menyebabkan kegagalan |
+| Komponen            | Metrik atau analisis                                                    |
+| ------------------- | ----------------------------------------------------------------------- |
+| Deteksi plat        | Precision, recall, IoU, mAP sesuai kebutuhan                            |
+| Pengenalan teks     | Character Error Rate (CER), Word Error Rate (WER), Exact Match Accuracy |
+| Kinerja aplikasi    | Waktu pemrosesan dan tingkat keberhasilan proses                        |
+| Analisis kualitatif | Contoh hasil benar/salah dan kondisi penyebab kegagalan                 |
 
-Pengujian akan mencakup citra jelas, gelap, buram, miring, resolusi rendah, tanpa plat, dan beberapa kendaraan bila dataset mendukungnya. Pembagian train/validation/test harus menghindari kebocoran data.
+Evaluasi dilakukan pada data yang sesuai dan tidak digunakan untuk tuning berulang. Metrik OCR memerlukan teks ground truth. Pengujian aplikasi juga mencakup file tidak valid, gambar tanpa plat, gambar buram, gelap, miring, dan resolusi rendah jika tersedia.
 
-## 10. Luaran yang ditargetkan
+## 10. Luaran proyek
 
-1. Source code aplikasi Python.
+1. Source code aplikasi ALPRO.
 2. Aplikasi yang dapat dijalankan secara lokal.
 3. Petunjuk instalasi dan penggunaan.
-4. Dokumentasi sumber dataset dan lisensi.
-5. Hasil pengujian berupa tabel, grafik, dan contoh citra.
-6. Laporan proyek akhir.
-7. Draf artikel ilmiah.
-8. Materi presentasi dan demonstrasi.
+4. Dokumentasi sumber dan audit dataset.
+5. Model deteksi dan konfigurasi eksperimen.
+6. Hasil pengujian berupa tabel, grafik, dan contoh visual.
+7. Laporan proyek akhir.
+8. Draf artikel ilmiah.
+9. Materi presentasi dan demonstrasi.
 
 ## 11. Prinsip pengembangan
 
 - **Modularitas:** deteksi, preprocessing, OCR, evaluasi, dan UI dipisahkan.
-- **Reproducibility:** versi dependency, dataset, parameter, dan pembagian data dicatat.
+- **Reproducibility:** versi dependency, dataset, parameter, dan split dicatat.
 - **Testability:** logika inti dapat diuji tanpa menjalankan UI.
-- **Traceability:** setiap hasil eksperimen dapat ditelusuri ke data dan konfigurasi yang digunakan.
-- **Responsible data use:** dataset digunakan sesuai lisensi dan privasi.
-- **Honest evaluation:** hasil, error, dan keterbatasan dilaporkan apa adanya.
+- **Traceability:** hasil eksperimen dapat ditelusuri ke konfigurasi dan data yang digunakan.
+- **Responsible data use:** dataset digunakan sesuai lisensi dan atribusi.
+- **Honest evaluation:** hasil, kesalahan, dan keterbatasan dilaporkan sesuai eksperimen.
 
-## 12. Status dan keputusan yang belum ditetapkan
+## 12. Status keputusan proyek
 
-| Keputusan | Status |
-|---|---|
-| Dataset utama | Belum final; audit Roboflow dan Zenodo terlebih dahulu |
-| Model deteksi final | Belum final; YOLO menjadi kandidat awal |
-| Engine OCR final | EasyOCR menjadi baseline, dapat dibandingkan dengan alternatif |
-| Jumlah data | Ditentukan setelah audit dataset |
-| Rasio split | Rencana awal 70/15/15, disesuaikan dengan kondisi data |
-| Target performa | Ditetapkan setelah baseline, bukan diasumsikan |
-| Video/real-time | Di luar ruang lingkup awal |
-| Bentuk UI | Streamlit sebagai pilihan awal |
+| Keputusan                   | Status                                                                 |
+| --------------------------- | ---------------------------------------------------------------------- |
+| Nama proyek                 | ALPRO — Automatic License Plate Recognition Online                     |
+| Dataset utama               | Indonesian_License_Plate dari Roboflow Universe; ZIP telah diunduh     |
+| Format dataset              | ZIP; format anotasi dan struktur aktual diverifikasi saat audit        |
+| Model deteksi               | YOLO menjadi pendekatan awal; versi final ditentukan saat implementasi |
+| OCR                         | EasyOCR sebagai baseline awal                                          |
+| Preprocessing               | OpenCV; teknik final ditentukan melalui eksperimen                     |
+| UI                          | Streamlit                                                              |
+| Input awal                  | Gambar statis                                                          |
+| Ground truth OCR            | Perlu diperiksa; anotasi manual subset jika tidak tersedia             |
+| Target performa             | Ditetapkan setelah baseline, bukan diasumsikan                         |
+| Deployment publik/real-time | Di luar ruang lingkup awal                                             |
 
-Dokumen ini menjadi sumber konteks bersama untuk diskusi dan implementasi berikutnya. Setiap perubahan keputusan penting perlu diperbarui di sini agar seluruh anggota tim menggunakan acuan yang sama.
+Dokumen ini menjadi sumber konteks bersama untuk diskusi dan implementasi ALPRO. Jika keputusan teknis berubah, perbarui bagian status ini dan dokumen perencanaan agar seluruh anggota kelompok menggunakan acuan yang sama.

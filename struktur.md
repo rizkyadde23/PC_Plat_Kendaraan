@@ -1,17 +1,21 @@
-# Struktur Folder Proyek ALPR
+# Struktur Folder Proyek ALPRO
 
-Dokumen ini menjelaskan struktur direktori yang direncanakan untuk aplikasi pengenalan plat nomor kendaraan berbasis Python.
+Dokumen ini menjelaskan susunan direktori proyek **ALPRO — Automatic License Plate Recognition Online**. Seluruh dokumentasi proyek (`konteks.md`, `perencanaan.md`, dan `struktur.md`) disimpan langsung di root repository.
 
 ## 1. Struktur direktori
 
 ```text
-alpr-project/
+ALPRO/
 │
 ├── app.py
-├── requirements.txt
 ├── README.md
+├── requirements.txt
 ├── .gitignore
 ├── .env.example
+│
+├── konteks.md
+├── perencanaan.md
+├── struktur.md
 │
 ├── configs/
 │   ├── app.yaml
@@ -21,28 +25,23 @@ alpr-project/
 ├── data/
 │   ├── README.md
 │   ├── raw/
-│   │   └── .gitkeep
+│   │   └── indonesian_license_plate/
+│   │       └── (hasil ekstraksi ZIP Roboflow)
 │   ├── interim/
-│   │   └── .gitkeep
 │   ├── processed/
-│   │   └── .gitkeep
 │   ├── annotations/
 │   │   ├── detection/
 │   │   └── ocr/
 │   └── splits/
-│       ├── train.txt
-│       ├── val.txt
-│       └── test.txt
 │
 ├── models/
 │   ├── pretrained/
-│   │   └── .gitkeep
 │   └── trained/
-│       └── .gitkeep
 │
 ├── src/
-│   └── alpr/
+│   └── alpro/
 │       ├── __init__.py
+│       │
 │       ├── config/
 │       │   ├── __init__.py
 │       │   └── settings.py
@@ -85,7 +84,7 @@ alpr-project/
 │
 ├── scripts/
 │   ├── audit_dataset.py
-│   ├── split_dataset.py
+│   ├── visualize_annotations.py
 │   ├── train_detector.py
 │   ├── evaluate_detector.py
 │   └── evaluate_ocr.py
@@ -98,68 +97,114 @@ alpr-project/
 │   └── integration/
 │       └── test_pipeline.py
 │
-├── outputs/
-│   ├── predictions/
-│   ├── visualizations/
-│   └── reports/
-│
-└── docs/
-    ├── konteks.md
-    ├── perencanaan.md
-    ├── struktur.md
-    ├── diagrams/
-    └── references/
+└── outputs/
+    ├── predictions/
+    ├── visualizations/
+    └── reports/
 ```
 
-## 2. Penjelasan direktori utama
+> Nama folder hasil ekstraksi di dalam `data/raw/indonesian_license_plate/` dapat berbeda mengikuti nama ZIP Roboflow. Sesuaikan path konfigurasi dengan struktur aktual setelah ekstraksi; jangan mengubah nama file dataset tanpa kebutuhan.
 
-| Direktori/file | Tanggung jawab |
-|---|---|
-| `app.py` | Entry point untuk menjalankan aplikasi Streamlit |
-| `requirements.txt` | Daftar dependency Python dan versinya |
-| `README.md` | Deskripsi, instalasi, cara menjalankan, dan penggunaan aplikasi |
-| `configs/` | Parameter aplikasi, model deteksi, dan preprocessing |
-| `data/raw/` | Dataset asli hasil unduhan/pengumpulan; tidak diedit |
-| `data/interim/` | Data sementara setelah ekstraksi atau konversi awal |
-| `data/processed/` | Dataset yang telah divalidasi dan siap digunakan |
-| `data/annotations/` | Label bounding box dan transkripsi teks OCR |
-| `data/splits/` | Daftar data train, validation, dan test |
-| `models/pretrained/` | Bobot model awal/publik yang digunakan |
-| `models/trained/` | Bobot hasil pelatihan proyek |
-| `src/alpr/` | Kode inti aplikasi yang dipisahkan berdasarkan tanggung jawab |
-| `ui/` | Halaman dan komponen antarmuka Streamlit |
-| `scripts/` | Script untuk audit data, pembagian data, training, dan evaluasi |
-| `tests/` | Unit test dan integration test |
-| `outputs/` | Hasil prediksi, visualisasi, dan laporan eksperimen |
-| `docs/` | Dokumentasi perencanaan, konteks, struktur, diagram, dan referensi |
+## 2. Penjelasan file root
 
-## 3. Tanggung jawab modul pada `src/alpr/`
+| File               | Tanggung jawab                                                       |
+| ------------------ | -------------------------------------------------------------------- |
+| `app.py`           | Entry point untuk menjalankan aplikasi Streamlit                     |
+| `README.md`        | Panduan ringkas instalasi, konfigurasi, dan penggunaan               |
+| `requirements.txt` | Daftar dependency Python                                             |
+| `.gitignore`       | Mengabaikan environment, cache, dataset besar, bobot, dan file lokal |
+| `.env.example`     | Contoh variabel lingkungan tanpa menyimpan secret                    |
+| `konteks.md`       | Konteks, tujuan, ruang lingkup, dan keputusan proyek                 |
+| `perencanaan.md`   | Fase, milestone, aktivitas, penjelasan, dan keluaran                 |
+| `struktur.md`      | Dokumentasi struktur direktori dan tanggung jawab modul              |
+
+Ketiga file dokumentasi proyek berada di root repository agar mudah ditemukan oleh seluruh anggota tim.
+
+## 3. Penjelasan direktori utama
+
+| Direktori                     | Tanggung jawab                                                        |
+| ----------------------------- | --------------------------------------------------------------------- |
+| `configs/`                    | Menyimpan konfigurasi aplikasi, model, dan preprocessing              |
+| `data/raw/`                   | Menyimpan hasil ekstraksi dataset Roboflow tanpa perubahan            |
+| `data/interim/`               | Menyimpan data sementara selama proses konversi/pemeriksaan           |
+| `data/processed/`             | Menyimpan data yang telah diproses dan siap untuk eksperimen tertentu |
+| `data/annotations/detection/` | Menyimpan atau mencatat anotasi deteksi                               |
+| `data/annotations/ocr/`       | Menyimpan ground truth teks plat untuk evaluasi OCR                   |
+| `data/splits/`                | Menyimpan daftar pembagian data jika diperlukan                       |
+| `models/pretrained/`          | Menyimpan bobot awal/pretrained yang digunakan                        |
+| `models/trained/`             | Menyimpan bobot hasil training proyek                                 |
+| `src/alpro/`                  | Kode inti aplikasi yang dipisahkan berdasarkan tanggung jawab         |
+| `ui/`                         | Halaman dan komponen antarmuka                                        |
+| `scripts/`                    | Script audit data, visualisasi anotasi, training, dan evaluasi        |
+| `tests/`                      | Unit test dan integration test                                        |
+| `outputs/`                    | Prediksi, visualisasi, dan laporan eksperimen                         |
+
+## 4. Tanggung jawab modul `src/alpro/`
 
 ### `config/`
-Membaca konfigurasi aplikasi dan parameter. Hindari menulis path model, threshold, atau nilai konfigurasi berulang kali di banyak modul.
+
+Memuat konfigurasi dan parameter aplikasi. Path dataset, path model, confidence threshold, dan parameter preprocessing sebaiknya diatur melalui konfigurasi, bukan ditulis berulang kali di berbagai modul.
 
 ### `core/`
-Mengatur alur utama aplikasi. `pipeline.py` memanggil detector, preprocessing, dan OCR sesuai urutan. `result.py` mendefinisikan bentuk hasil yang konsisten, misalnya status, bounding box, teks OCR, confidence, durasi, dan pesan error.
+
+Mengatur alur pemrosesan utama.
+
+- `pipeline.py`: mengorkestrasi validasi gambar, deteksi, cropping, preprocessing, OCR, dan penyusunan hasil.
+- `result.py`: mendefinisikan struktur hasil yang konsisten, seperti status, bounding box, teks, confidence, durasi, dan pesan error.
 
 ### `detection/`
-Berisi implementasi deteksi plat. `plate_detector.py` bertanggung jawab memuat model dan mengembalikan koordinat bounding box serta confidence. Modul ini tidak mengurus tampilan UI.
+
+Berisi implementasi deteksi plat.
+
+- `plate_detector.py`: memuat model YOLO dan menghasilkan koordinat bounding box, confidence, serta kelas.
+
+Modul ini tidak bertanggung jawab menampilkan komponen UI.
 
 ### `preprocessing/`
-- `image_loader.py`: validasi dan pembacaan gambar.
-- `plate_cropper.py`: pemotongan area plat berdasarkan bounding box.
-- `image_preprocessor.py`: operasi grayscale, resize, denoising, contrast enhancement, thresholding, dan morphology.
+
+- `image_loader.py`: membaca dan memvalidasi file gambar.
+- `plate_cropper.py`: memotong area plat berdasarkan bounding box.
+- `image_preprocessor.py`: menjalankan grayscale, resize, denoising, contrast enhancement, thresholding, dan morphology sesuai konfigurasi eksperimen.
 
 ### `recognition/`
-- `ocr_engine.py`: adapter untuk menjalankan OCR.
-- `text_normalizer.py`: normalisasi hasil OCR tanpa menghilangkan prediksi mentah.
+
+- `ocr_engine.py`: adapter untuk menjalankan OCR, dengan EasyOCR sebagai baseline awal.
+- `text_normalizer.py`: normalisasi hasil teks. Simpan hasil OCR mentah agar prediksi asli tetap dapat diperiksa.
 
 ### `evaluation/`
-Menghitung metrik deteksi dan OCR serta menyusun ringkasan evaluasi. Metrik harus menggunakan ground truth yang sesuai.
+
+Menghitung metrik deteksi dan OCR. Metrik OCR membutuhkan ground truth teks; anotasi bounding box saja tidak cukup.
 
 ### `utils/`
-Fungsi pendukung umum seperti visualisasi gambar dan logging. Jangan menjadikan direktori ini tempat menumpuk seluruh logika aplikasi.
 
-## 4. Alur dependensi yang disarankan
+Fungsi pendukung seperti visualisasi gambar dan logging. Hindari menempatkan seluruh logika aplikasi di direktori ini.
+
+## 5. Tanggung jawab direktori lain
+
+### `ui/`
+
+Berisi halaman Streamlit. UI bertugas menerima input pengguna dan menyajikan hasil pipeline, bukan menjalankan detail algoritma deteksi atau OCR secara langsung.
+
+### `scripts/`
+
+Script yang dijalankan untuk pekerjaan terpisah dari aplikasi:
+
+- `audit_dataset.py`: memeriksa file gambar, label, split, dan konfigurasi dataset.
+- `visualize_annotations.py`: menggambar bounding box untuk pemeriksaan anotasi.
+- `train_detector.py`: menjalankan eksperimen training detektor.
+- `evaluate_detector.py`: mengevaluasi deteksi.
+- `evaluate_ocr.py`: mengevaluasi OCR dengan ground truth teks.
+
+### `tests/`
+
+- `unit/`: menguji fungsi kecil secara terpisah.
+- `integration/`: menguji hubungan antarmodul dan pipeline.
+
+### `outputs/`
+
+Menyimpan artefak eksperimen. Atur penamaan berdasarkan tanggal atau ID eksperimen agar hasil tidak tertimpa dan dapat dibandingkan.
+
+## 6. Alur dependensi
 
 ```text
 app.py
@@ -174,28 +219,29 @@ app.py
 
 scripts/
   ├── audit_dataset.py
+  ├── visualize_annotations.py
   ├── train_detector.py
   └── evaluate_*.py
        └── evaluation/
 ```
 
-Prinsip desain:
-- UI hanya menangani interaksi dan presentasi.
-- Pipeline mengorkestrasi proses, bukan mengimplementasikan seluruh algoritma.
-- Setiap modul memiliki tanggung jawab spesifik.
-- Modul inti dapat diuji tanpa menjalankan Streamlit.
-- Konfigurasi dan path tidak di-hardcode di banyak tempat.
-- Gunakan type hints, docstring, logging, dan penanganan error.
-- Simpan hasil eksperimen agar proses dapat direproduksi.
+Prinsip dependensi:
 
-## 5. Kebijakan penyimpanan data dan model
+- UI memanggil pipeline.
+- Pipeline mengatur urutan proses.
+- Modul deteksi, preprocessing, dan OCR tidak bergantung pada UI.
+- Evaluasi dapat dijalankan melalui script atau halaman evaluasi.
+- Modul inti harus dapat diuji tanpa menjalankan Streamlit.
 
-- Jangan memasukkan dataset besar ke Git.
-- Jangan commit file rahasia, token, atau kredensial.
-- Jangan commit bobot model besar kecuali repository memang disiapkan untuk itu.
-- Catat sumber, versi, tanggal unduh, lisensi, dan checksum dataset jika memungkinkan.
-- Pertahankan dataset asli di `data/raw/`; lakukan pemrosesan ke direktori lain.
-- Pastikan `.gitignore` mengecualikan isi dataset, model besar, cache, environment, dan output sementara.
+## 7. Kebijakan dataset dan model
+
+1. Dataset Roboflow disimpan di `data/raw/indonesian_license_plate/` setelah diekstrak.
+2. Pertahankan file asli dan anotasi sebagaimana diunduh.
+3. Jangan menyimpan ZIP dan seluruh dataset besar ke Git.
+4. Catat URL sumber, versi dataset, tanggal unduh, lisensi, jumlah file aktual, serta konfigurasi preprocessing.
+5. Simpan hasil modifikasi atau konversi di `interim/` atau `processed/`, bukan menimpa `raw/`.
+6. Bobot model besar disimpan di direktori `models/` dan tidak perlu di-commit kecuali repository memang disiapkan untuk itu.
+7. Jangan memasukkan data pribadi, API key, atau secret ke repository publik.
 
 Contoh `.gitignore`:
 
@@ -205,8 +251,8 @@ venv/
 __pycache__/
 *.py[cod]
 .pytest_cache/
-.streamlit/secrets.toml
 .env
+.streamlit/secrets.toml
 
 data/raw/*
 data/interim/*
@@ -220,25 +266,23 @@ models/trained/*
 !models/pretrained/.gitkeep
 !models/trained/.gitkeep
 
-outputs/*
-!outputs/predictions/
-!outputs/visualizations/
-!outputs/reports/
+outputs/predictions/*
+outputs/visualizations/*
+outputs/reports/*
 ```
 
-Sesuaikan aturan ignore jika tim perlu menyimpan artefak kecil atau contoh data yang memang boleh dibagikan.
+Sesuaikan `.gitignore` jika tim perlu menyimpan contoh data kecil yang memang boleh dibagikan. Dokumentasi dataset tetap disimpan di `data/README.md`, bukan file dataset itu sendiri.
 
-## 6. Urutan pembuatan folder
+## 8. Urutan pembuatan struktur
 
-Buat struktur secara bertahap agar tidak terlalu banyak direktori kosong:
+1. Buat root repository `ALPRO/`.
+2. Letakkan `konteks.md`, `perencanaan.md`, dan `struktur.md` langsung di root.
+3. Buat environment, `requirements.txt`, `.gitignore`, dan README.
+4. Ekstrak ZIP Roboflow ke `data/raw/indonesian_license_plate/`.
+5. Buat script audit sebelum memulai training.
+6. Buat modul `src/alpro/` sesuai fase implementasi.
+7. Buat `tests/` bersamaan dengan pengembangan modul.
+8. Buat `ui/` setelah pipeline inti berjalan.
+9. Gunakan `outputs/` untuk artefak hasil eksperimen.
 
-1. Buat root project, virtual environment, `requirements.txt`, dan `README.md`.
-2. Buat `docs/` dan lengkapi konteks serta perencanaan.
-3. Buat `data/` setelah sumber dataset dipilih.
-4. Buat `src/alpr/` ketika mulai mengimplementasikan modul.
-5. Buat `scripts/` untuk pekerjaan dataset dan eksperimen.
-6. Buat `ui/` setelah pipeline inti berjalan.
-7. Buat `tests/` sejak modul pertama dikembangkan.
-8. Buat direktori output untuk menyimpan artefak evaluasi.
-
-Struktur ini merupakan rancangan awal. Nama file dapat disesuaikan selama pemisahan tanggung jawab dan dokumentasinya tetap terjaga.
+Struktur ini adalah rancangan yang dapat berkembang. Penambahan atau pengubahan file diperbolehkan selama tanggung jawab modul tetap jelas dan dokumentasi diperbarui.
