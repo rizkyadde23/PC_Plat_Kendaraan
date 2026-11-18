@@ -1,0 +1,12 @@
+# ALPRO - Konfigurasi dataset YOLO kerja (turunan, Milestone 4)
+# Sumber data: data/raw/indonesian_license_plate (TIDAK diubah)
+# Catatan: data.yaml bawaan raw memiliki path relatif ekspor yang tidak resolve
+# pada audit; config ini menunjuk ke struktur aktual dataset dari root proyek.
+
+path: data/raw/indonesian_license_plate
+train: train/images
+val: valid/images
+test: test/images
+
+nc: 1
+names: ['License-Plate']

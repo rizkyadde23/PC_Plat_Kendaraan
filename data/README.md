@@ -96,17 +96,32 @@ Diterapkan pada versi dataset yang diekspor (bukan data mentah asli):
 - **`data.yaml`:** terbaca (nc=1, names=['License-Plate']), namun terdapat **3 warning** terkait resolusi path relatif bawaan (`train/val/test`) terhadap lokasi yaml/root dataset (lihat §3).
 - **Ground truth teks OCR:** **tidak tersedia**. Label hanya berupa bounding box deteksi; evaluasi OCR kuantitatif (CER/WER/Exact Match) memerlukan anotasi teks terpisah pada subset tervalidasi (disimpan di `data/annotations/ocr/`, bukan di `data/raw/`).
 
-## 8. Kesiapan & Rekomendasi Tindak Lanjut
+## 8. Persiapan Dataset (Milestone 4)
 
-- **Status kesiapan (Milestone 3):** **`READY_WITH_WARNINGS`** — tidak ada ERROR blocking (tidak ada corrupt, label invalid, pairing error, atau duplikat lintas-split), namun terdapat warning yang perlu diperhatikan.
-- **Rekomendasi sebelum/selama Milestone 4 (Dataset Preparation):**
-  - Lakukan **verifikasi visual** pada 4 label kosong dan sampel anotasi (lihat visualisasi audit) untuk memastikan makna no-object vs anotasi hilang.
-  - Pertimbangkan dampak **duplikat intra-split** (over-representasi) saat pelatihan/evaluasi; jika diperlukan penanganan (deduplikasi/subset), lakukan pada data turunan/split kerja di `data/interim/`, `data/processed/`, atau `data/splits/` — **bukan** pada `data/raw/`.
-  - **Pertahankan split bawaan** train/valid/test kecuali ada alasan teknis jelas dan terdokumentasi; pastikan tidak ada kebocoran data.
-  - Siapkan strategi **ground truth OCR** (subset anotasi teks manual tervalidasi) untuk evaluasi pengenalan karakter.
-  - Saat menggunakan `data.yaml` untuk training, pastikan path dataset ter-resolve dengan benar dari lingkungan eksekusi (konfigurasi turunan bila perlu, tanpa mengubah `raw/`).
+- **Run persiapan:** `20261118_212026` (`scripts/prepare_dataset.py`)
+- **Laporan:** `outputs/reports/dataset_preparation/20261118_212026/` (`report.md`, `report.json`)
+- **Config YOLO kerja (turunan):** `configs/dataset.yaml` (menunjuk ke `data/raw/indonesian_license_plate/{train,valid,test}/images`; `data/raw` tidak diubah)
+- **Manifest turunan:** `data/splits/` (`*_manifest.json/csv`, `preparation_manifest_summary.json`)
 
-## 9. Atribusi
+### Keputusan persiapan yang diterapkan
+- **6.1A (provisional):** 4 label kosong **dipertahankan** sebagai kandidat background/no-object dalam manifest, **wajib verifikasi visual** sebelum training.
+- **6.2A:** semua sampel **dipertahankan**; duplikat **intra-split** didokumentasikan (374 grup, 1085 file; 0 lintas-split per audit M3).
+- **6.3C/6.4A:** config kerja + manifest turunan tanpa duplikasi file gambar.
+- **6.5A(ii),C(i):** kerangka OCR dan **50 kandidat anotasi** (seed 42, proporsional {'train': 44, 'valid': 4, 'test': 2}) disiapkan di `data/annotations/ocr/` **tanpa** `plate_text_gt` otomatis.
+
+### Status kesiapan pasca-persiapan
+- **Deteksi (YOLO):** siap untuk baseline menggunakan `configs/dataset.yaml` dan manifest turunan (split bawaan dipertahankan, tidak ada indikasi leakage lintas-split). Perhatikan verifikasi visual label kosong dan over-representasi duplikat intra-split.
+- **Evaluasi OCR:** **tertunda** hingga anotasi manual ground truth (`plate_text_gt`, terverifikasi) tersedia di `data/annotations/ocr/`.
+
+## 9. Rekomendasi Tindak Lanjut
+- Lakukan **verifikasi visual** 4 label kosong (rujuk visualisasi audit) dan perbarui manifest turunan jika keputusan per-file berubah (tanpa ubah `raw/`).
+- Pertimbangkan strategi penanganan **duplikat intra-split** pada eksperimen training bila diperlukan (melalui data/manifest turunan).
+- Pastikan konfigurasi training Ultralytics menggunakan path/config kerja yang resolve benar dari environment eksekusi.
+- Lakukan **anotasi manual** subset OCR (mulai dari `data/annotations/ocr/ocr_annotation_candidates.csv`) dengan QA (`verified`) untuk evaluasi CER/WER/EMA.
+- Pertahankan split bawaan kecuali ada alasan teknis jelas dan terdokumentasi.
+
+## 10. Atribusi
 
 Dataset: *Indonesian_License_Plate* oleh kontributor Roboflow Universe (`dataset-pyufc`), dilisensikan **CC BY 4.0**.  
 Sumber: https://universe.roboflow.com/dataset-pyufc/indonesian_license_plate
+

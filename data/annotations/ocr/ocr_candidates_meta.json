@@ -1,0 +1,19 @@
+{
+  "seed": 42,
+  "requested_total": 50,
+  "eligible_counts": {
+    "train": 1083,
+    "valid": 106,
+    "test": 52
+  },
+  "allocation": {
+    "train": 44,
+    "valid": 4,
+    "test": 2
+  },
+  "selected_counts": {
+    "train": 44,
+    "valid": 4,
+    "test": 2
+  }
+}
