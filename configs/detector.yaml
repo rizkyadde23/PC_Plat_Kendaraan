@@ -1,15 +1,23 @@
-# Konfigurasi detektor plat (kerangka, belum final)
-# Nilai final ditentukan setelah audit dataset dan eksperimen baseline.
+# Konfigurasi detektor plat nomor — ALPRO (baseline Milestone 5)
+# Keputusan: 6.1A CPU-only, 6.2 yolov8n, 6.3-6.9 adopsi rekomendasi praktis.
 
 dataset:
-  yaml: "data/raw/indonesian_license_plate/data.yaml"
-  # Catatan: data.yaml bawaan Roboflow menggunakan path relatif (../train/images, dll).
-  # Pastikan resolusi path saat training/inferensi; jangan mengubah file di data/raw.
+  yaml: "configs/dataset.yaml"  # config kerja M4 (data/raw tidak diubah)
+  splits:
+    train: 1085
+    val: 107
+    test: 53
+  notes:
+    - "Split bawaan dipertahankan; 0 duplikat lintas-split (audit M3)."
+    - "Seluruh train berada dalam 374 grup duplikat intra-split (over-representasi)."
+    - "4 label kosong provisional (6.1A) included; verifikasi visual disarankan."
 
 model:
   framework: "ultralytics-yolo"
-  baseline_weights: "yolo11n.pt"   # kandidat baseline; dapat disesuaikan saat Milestone 5
-  trained_dir: "models/trained"
+  family: "yolov8"
+  variant: "yolov8n"
+  baseline_weights: "yolov8n.pt"  # pretrained; dapat diunduh saat run pertama
+  trained_dir: "models/trained/detection"
 
 inference:
   conf_threshold: 0.25
@@ -19,8 +27,28 @@ inference:
   max_detections: 10
 
 training:
-  # Placeholder eksperimen baseline (belum dijalankan di Milestone 2)
   epochs: 50
-  batch: 16
+  batch: 8
   imgsz: 640
+  device: "cpu"
+  seed: 42
   patience: 20
+  workers: 2
+  optimizer: "auto"        # default Ultralytics
+  augmentation: "default"   # default Ultralytics
+  cache: false
+  deterministic: true
+
+evaluation:
+  report_val: true
+  report_test_once: true
+  metrics: ["precision", "recall", "mAP50", "mAP50-95"]
+  tuning_on_test: false
+
+artifacts:
+  reports_dir: "outputs/reports/detection"
+  visualizations_dir: "outputs/visualizations/detection"
+  predictions_dir: "outputs/predictions/detection"
+  viz_per_split: 15
+  viz_splits: ["val", "test"]
+  experiment_id_pattern: "yolov8n_baseline_<run-id>"
