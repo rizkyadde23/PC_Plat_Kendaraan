@@ -4,9 +4,23 @@
 > **Mata kuliah:** Pengolahan Citra Digital  
 > **Bahasa pemrograman:** Python  
 > **Fokus:** Pengembangan aplikasi perangkat lunak  
-> **Status:** Dataset utama telah diunduh dari Roboflow Universe dalam bentuk ZIP.
+> **Status:** Milestone 1–5 selesai (analisis, setup, audit dataset, persiapan data, baseline deteksi YOLO). Milestone 6+ (crop/preprocessing, OCR, integrasi pipeline, UI, evaluasi menyeluruh, finalisasi) belum dimulai. Pembaruan: Nov 2026.
 
 Dokumen ini menjadi roadmap pelaksanaan proyek. Pengembangan dibagi menjadi fase/milestone agar setiap tahap mempunyai tujuan, aktivitas, penjelasan, dan keluaran yang dapat diperiksa sebelum melanjutkan ke tahap berikutnya.
+
+## Status pelaksanaan (ringkasan)
+
+| Milestone kerja | Fase rujukan | Status | Realisasi utama |
+| --- | --- | --- | --- |
+| M1 — Analisis & inisiasi | Fase 1 | **Selesai** | Tinjauan `konteks.md`, `perencanaan.md`, `struktur.md`, audit awal repo/dataset, identifikasi gap & risiko |
+| M2 — Setup repository & environment | Fase 1–2 | **Selesai** | Struktur/scaffold, `.venv` (Python 3.13.3), `requirements.txt` (hybrid), `.env.example`, `configs/{app,detector,preprocessing}.yaml`, `data/README.md`, `.gitignore`, `README.md`; dependensi terpasang & import inti terverifikasi (CPU-first, `app.py` ditunda ke Milestone UI/Fase 9) |
+| M3 — Audit dataset | Fase 3 | **Selesai** | `scripts/audit_dataset.py`; run `outputs/reports/dataset_audit/20261118_210535/` (**READY_WITH_WARNINGS**: 1245 img/lbl, 0 error struktur/pairing, 0 cross-split, 374 grup duplikat intra-split/1085 file, 4 label kosong, isu path `data.yaml` raw, tidak ada GT OCR) |
+| M4 — Persiapan dataset | Fase 4 | **Selesai** | `scripts/prepare_dataset.py`; `configs/dataset.yaml` (kerja), manifest `data/splits/*`, kerangka OCR + 50 kandidat `data/annotations/ocr/` (GT kosong/manual), laporan `outputs/reports/dataset_preparation/20261118_212026/`, `data/README.md` diperbarui; `data/raw/` tidak diubah |
+| M5 — Baseline deteksi YOLO | Fase 5 | **Selesai** | `scripts/train_detector.py`, `scripts/evaluate_detector.py`, `src/alpro/detection/plate_detector.py`, `configs/detector.yaml` (yolov8n, CPU); experiment `yolov8n_baseline_m5_20261118_cpu` (early stop epoch 40, best 20). Evaluasi eksplisit: **val** P=0.941 R=0.896 mAP@50=0.901 mAP@50-95=0.715; **test (sekali)** P=0.983 R=0.948 mAP@50=0.955 mAP@50-95=0.761. Laporan `outputs/reports/detection/.../report.md`, visualisasi `outputs/visualizations/detection/.../{val,test}/` |
+| M6 — Crop & preprocessing | Fase 6 | Belum dimulai | - |
+| M7 — OCR & normalisasi | Fase 7 | Belum dimulai | Bergantung ketersediaan/strategi GT teks untuk evaluasi kuantitatif |
+| M8 — Integrasi pipeline & UI | Fase 8–9 | Belum dimulai | `app.py`/Streamlit sesuai keputusan M2 |
+| M9 — Evaluasi & finalisasi | Fase 10–11 | Belum dimulai | Pengujian menyeluruh, laporan, artikel, demo |
 
 ## Gambaran umum proyek
 
@@ -68,9 +82,14 @@ Tahap ini memastikan aplikasi tidak hanya menjadi demonstrasi OCR, tetapi memper
 - Ruang lingkup dan batasan proyek.
 - Pembagian tugas awal anggota kelompok.
 
+### Realisasi (aktual)
+
+- **Selesai (M1):** analisis dokumen acuan (`konteks.md`, `perencanaan.md`, `struktur.md`), peninjauan kondisi repo/dataset, serta identifikasi gap, risiko, dan rekomendasi awal.
+- Dokumen konteks, ruang lingkup/batasan, dan arah pipeline tersedia di repo; pembagian tugas anggota dapat diperinci/diperbarui terpisah sesuai kebutuhan kelompok.
+
 ### Kriteria selesai
 
-Seluruh anggota memahami tujuan, alur sistem, fitur versi awal, dan hal-hal yang tidak termasuk ruang lingkup.
+Seluruh anggota memahami tujuan, alur sistem, fitur versi awal, dan hal-hal yang tidak termasuk ruang lingkup. *(Tujuan & ruang lingkup inti telah ditetapkan; rincian operasional tim dapat dilengkapi.)*
 
 ---
 
@@ -117,9 +136,17 @@ Lingkungan virtual mencegah dependency proyek bercampur dengan instalasi Python 
 - `.gitignore`.
 - README berisi instruksi setup awal.
 
+### Realisasi (aktual, M2)
+
+- Struktur direktori & scaffold paket dibuat sesuai rancangan (`src/alpro/**`, `ui/`, `scripts/`, `configs/`, `tests/`, `data/`, `models/`, `outputs/`, dll.).
+- `.venv` aktif (Python 3.13.3, Windows) dengan strategi **CPU-first** (catatan upgrade CUDA didokumentasi); `requirements.txt` (versioning hybrid), `.env.example`, `.gitignore`, `README.md`, dan `data/README.md` disiapkan.
+- Konfigurasi kerangka: `configs/app.yaml`, `configs/detector.yaml`, `configs/preprocessing.yaml`.
+- Dependensi terpasang dan import inti terverifikasi (termasuk `ultralytics`, `torch/torchvision`, `opencv-python`, `easyocr`, `streamlit`, `pytest`, `jiwer`).
+- **Keputusan alur:** `app.py` ditunda ke fase UI (Fase 9/Milestone UI) agar fondasi pipeline/modul stabil terlebih dahulu.
+
 ### Kriteria selesai
 
-Proyek dapat dijalankan pada environment lokal dan dependency utama berhasil diimpor.
+Proyek dapat dijalankan pada environment lokal dan dependency utama berhasil diimpor. *(Terpenuhi.)*
 
 ---
 
@@ -165,9 +192,16 @@ Audit diperlukan sebelum training. Kesalahan label, pasangan file yang hilang, a
 - Visualisasi sampel bounding box.
 - Daftar temuan audit dan masalah dataset.
 
+### Realisasi (aktual, M3)
+
+- Script audit: `scripts/audit_dataset.py`; run formal `outputs/reports/dataset_audit/20261118_210535/` (`report.md`, `report.json`, `issue_summary.csv`, detail CSV) dan visualisasi `outputs/visualizations/dataset_audit/20261118_210535/`.
+- **Status audit:** `READY_WITH_WARNINGS` (ERROR 0, WARNING 381, INFO 1). 1245/1245 pasangan gambar-label, pairing OK, 0 unreadable/invalid, seluruh citra 640×640 (3 channel), 1 kelas `License-Plate`.
+- **Temuan utama:** 0 duplikat lintas-split; 374 grup duplikat intra-split (1085 file, seluruhnya di train); 4 label kosong (candidate background/no-object, perlu verifikasi visual); isu resolusi path pada `data.yaml` bawaan raw; tidak ada ground truth teks OCR.
+- `data/README.md` diperbarui dengan temuan formal; `data/raw/indonesian_license_plate/` tidak diubah.
+
 ### Kriteria selesai
 
-Struktur dataset, kelas, anotasi, jumlah data aktual, pembagian data, preprocessing, dan lisensinya telah dipahami serta terdokumentasi.
+Struktur dataset, kelas, anotasi, jumlah data aktual, pembagian data, preprocessing, dan lisensinya telah dipahami serta terdokumentasi. *(Terpenuhi.)*
 
 ---
 
@@ -198,9 +232,17 @@ Anotasi bounding box hanya memberi tahu lokasi plat. Anotasi tersebut tidak memb
 - Dataset evaluasi OCR berisi pasangan crop dan teks acuan, jika akan melakukan evaluasi OCR kuantitatif.
 - Catatan prosedur anotasi dan verifikasi teks.
 
+### Realisasi (aktual, M4)
+
+- Script persiapan: `scripts/prepare_dataset.py`; run `outputs/reports/dataset_preparation/20261118_212026/` (`report.md`, `report.json`).
+- **Config YOLO kerja:** `configs/dataset.yaml` menunjuk ke `data/raw/indonesian_license_plate/{train,valid,test}/images` (tanpa duplikasi gambar; `data.yaml` raw tidak diubah).
+- **Manifest turunan:** `data/splits/*_manifest.{json,csv}` dan `preparation_manifest_summary.json` (1245 included, 0 excluded; flag empty-label provisional & duplikat intra-split terdokumentasi; split bawaan dipertahankan).
+- **Kerangka OCR:** `data/annotations/ocr/` (`README.md`, template, `ocr_annotation_candidates.csv` berisi 50 kandidat deterministik seed 42 proporsional non-empty, skema `image_path,split,plate_text_gt,unreadable,notes,verified`) — `plate_text_gt` **belum diisi** (tidak ada GT otomatis/asumtif).
+- `data/README.md` diperbarui; `data/raw/` tidak diubah.
+
 ### Kriteria selesai
 
-Data deteksi dapat dimuat oleh framework dan tersedia rencana ground truth yang jelas untuk evaluasi OCR.
+Data deteksi dapat dimuat oleh framework dan tersedia rencana ground truth yang jelas untuk evaluasi OCR. *(Terpenuhi untuk deteksi; GT OCR kuantitatif masih menunggu anotasi manual/terverifikasi.)*
 
 ---
 
@@ -230,9 +272,18 @@ Pada fase ini targetnya adalah baseline yang dapat diukur, bukan langsung mengej
 - Contoh gambar hasil deteksi.
 - Metrik deteksi awal.
 
+### Realisasi (aktual, M5)
+
+- **Keputusan baseline:** 6.1A CPU-only, 6.2 `yolov8n` (`yolov8n.pt`), parameter 6.3 (epochs 50, batch 8, imgsz 640, seed 42, patience 20, workers 2, default optimizer/augmentasi, cache false, deterministic true), data `configs/dataset.yaml` apa adanya (6.4A), evaluasi eksplisit val + test sekali tanpa tuning test (6.5A), visualisasi 15/split seed 42 (6.7A).
+- **Implementasi:** `scripts/train_detector.py`, `scripts/evaluate_detector.py`, `src/alpro/detection/plate_detector.py` (+ `__init__`), `configs/detector.yaml` diperbarui.
+- **Experiment:** `yolov8n_baseline_m5_20261118_cpu` (CPU, AMD Ryzen 5 6600H) — training selesai dengan early stopping pada **epoch 40/50** (best epoch 20, mAP@50-95(B)=0.73756), durasi ~2.85 jam.
+- **Artefak aktual:** training run `runs/detect/models/trained/detection/yolov8n_baseline_m5_20261118_cpu/` (`weights/best.pt`, `last.pt`, `results.csv`, plot/args); laporan & metrik `outputs/reports/detection/yolov8n_baseline_m5_20261118_cpu/` (`report.md`, `evaluation_metrics.json/csv`, ringkasan training); visualisasi `outputs/visualizations/detection/yolov8n_baseline_m5_20261118_cpu/{val,test}/` (15+15); output evaluasi Ultralytics `runs/detect/outputs/predictions/detection/.../{val_val,val_test}/`. *(Catatan: lokasi training aktual berada di bawah `runs/detect/...` sesuai resolusi path Ultralytics, berbeda dari target konseptual `models/trained/detection/`.)*
+- **Metrik evaluasi eksplisit (best.pt):** **val** (107 img, 159 inst) P=0.941, R=0.896, mAP@50=0.901, mAP@50-95=0.715; **test sekali** (53 img, 62 inst) P=0.983, R=0.948, mAP@50=0.955, mAP@50-95=0.761.
+- Interpretasi harus mempertimbangkan konteks data (duplikat intra-split train & 4 label kosong provisional) dan batasan CPU-only.
+
 ### Kriteria selesai
 
-Model dapat menerima gambar dan menghasilkan koordinat bounding box beserta confidence, termasuk kondisi ketika plat tidak terdeteksi.
+Model dapat menerima gambar dan menghasilkan koordinat bounding box beserta confidence, termasuk kondisi ketika plat tidak terdeteksi. *(Terpenuhi; baseline terukur, tervalidasi eksplisit, dan terdokumentasi.)*
 
 ---
 
@@ -443,17 +494,19 @@ Aplikasi dapat dijalankan oleh orang lain mengikuti README dan seluruh luaran tu
 
 ## Ringkasan milestone dan keluaran
 
-| Milestone                | Fase | Keluaran utama                                                   |
-| ------------------------ | ---- | ---------------------------------------------------------------- |
-| M1 — Project setup       | 1–2  | Konteks, kebutuhan, repository, environment                      |
-| M2 — Dataset ready       | 3–4  | Dataset terverifikasi, konfigurasi, audit, ground truth OCR plan |
-| M3 — Detection baseline  | 5    | Model deteksi, bobot, log, metrik awal                           |
-| M4 — Image processing    | 6    | Cropping dan preprocessing                                       |
-| M5 — Text recognition    | 7    | OCR dan normalisasi teks                                         |
-| M6 — End-to-end pipeline | 8    | Pipeline ALPRO yang terintegrasi                                 |
-| M7 — Application UI      | 9    | Aplikasi Streamlit                                               |
-| M8 — Evaluation          | 10   | Test report, metrik, analisis error                              |
-| M9 — Final delivery      | 11   | Source code, laporan, artikel, presentasi, demo                  |
+> Pemetaan di bawah mengikuti **alur kerja aktual** yang telah dijalankan (M1–M5 selesai). Fase 1–11 tetap menjadi rujukan ruang lingkup teknis; milestone kerja berikutnya menyesuaikan urutan implementasi modul inti sebelum integrasi/UI dan evaluasi akhir.
+
+| Milestone kerja | Fase rujukan | Status | Keluaran utama (aktual/rencana) |
+| --- | --- | --- | --- |
+| M1 — Analisis & inisiasi | 1 | **Selesai** | Analisis repo & dokumen acuan, pemahaman dataset/scope, gap & risiko, rencana bertahap |
+| M2 — Setup repository & environment | 1–2 | **Selesai** | Scaffold, `.venv` + dependensi terverifikasi (CPU-first), configs kerangka, `requirements.txt`, `.gitignore`, README/data docs (UI `app.py` ditunda) |
+| M3 — Audit dataset | 3 | **Selesai** | Audit formal, laporan & visualisasi, temuan kualitas/split/duplikat/label kosong, status kesiapan data |
+| M4 — Persiapan dataset | 4 | **Selesai** | `configs/dataset.yaml` kerja, manifest `data/splits/`, kerangka & kandidat anotasi OCR (`data/annotations/ocr/`), laporan persiapan; deteksi siap baseline, GT OCR belum terisi |
+| M5 — Baseline deteksi YOLO | 5 | **Selesai** | `yolov8n` CPU baseline, `best.pt/last.pt`, metrik val & test (sekali), visualisasi prediksi, modul deteksi & script train/eval, laporan eksperimen |
+| M6 — Plate crop & preprocessing OCR | 6 | Belum dimulai | `plate_cropper.py`, `image_preprocessor.py`, hasil crop/preprocessing & perbandingan untuk OCR |
+| M7 — OCR & normalisasi teks | 7 | Belum dimulai | `ocr_engine.py`, `text_normalizer.py`, hasil OCR mentah/normalisasi; evaluasi kuantitatif bila GT teks tersedia |
+| M8 — Integrasi pipeline & UI aplikasi | 8–9 | Belum dimulai | `pipeline.py`/`result.py`, integration test, Streamlit (`app.py`) & tampilan tahapan proses |
+| M9 — Evaluasi menyeluruh & finalisasi | 10–11 | Belum dimulai | Pengujian end-to-end, metrik deteksi/OCR/aplikasi, analisis error, dokumentasi final, laporan/artikel/presentasi/demo |
 
 ## Catatan pengelolaan eksperimen
 
@@ -471,11 +524,11 @@ Jangan menetapkan target angka performa tanpa baseline. Tentukan target setelah 
 
 ## Checklist progres
 
-- [ ] Fase 1 — Inisiasi dan kebutuhan
-- [ ] Fase 2 — Repository dan environment
-- [ ] Fase 3 — Audit dataset Roboflow
-- [ ] Fase 4 — Penyiapan dataset dan ground truth OCR
-- [ ] Fase 5 — Baseline deteksi
+- [x] Fase 1 — Inisiasi dan kebutuhan *(inti: analisis & konteks/scope terdokumentasi; detail operasional tim dapat dilengkapi)*
+- [x] Fase 2 — Repository dan environment *(scaffold, venv, dependensi terverifikasi, config kerangka; UI ditunda)*
+- [x] Fase 3 — Audit dataset Roboflow *(audit formal + laporan/visualisasi, temuan terdokumentasi)*
+- [x] Fase 4 — Penyiapan dataset dan ground truth OCR *(config/manifest/kerangka & kandidat OCR siap; GT teks manual belum terisi)*
+- [x] Fase 5 — Baseline deteksi *(training & evaluasi eksplisit val/test selesai, artefak & laporan tersedia)*
 - [ ] Fase 6 — Cropping dan preprocessing
 - [ ] Fase 7 — OCR dan normalisasi
 - [ ] Fase 8 — Integrasi pipeline
