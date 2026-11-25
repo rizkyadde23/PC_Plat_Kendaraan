@@ -1,0 +1,35 @@
+# Konfigurasi pipeline end-to-end ALPRO (Milestone 8)
+# Default konservatif: original_crop (M7 kualitatif; belum konklusif kuantitatif).
+
+pipeline:
+  name: "alpro_default"
+  device: "cpu"
+
+detector:
+  weights: "runs/detect/models/trained/detection/yolov8n_baseline_m5_20261118_cpu/weights/best.pt"
+  conf: 0.25
+  iou: 0.45
+  imgsz: 640
+  max_det: 10
+
+crop:
+  strategy: "top_confidence"  # top_confidence | all (all dicatat; UI default top_confidence)
+  padding_ratio: 0.05
+  min_size: 8
+
+preprocessing:
+  config_path: "configs/preprocessing.yaml"
+  default_variant: "original_crop"
+  fallback_variant: "original_crop"
+
+ocr:
+  config_path: "configs/ocr.yaml"
+
+output:
+  save_by_default: false
+  dir: "outputs/predictions/pipeline"
+
+ui:
+  allow_save: true
+  show_intermediate: true
+  show_candidates: true

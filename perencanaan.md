@@ -4,7 +4,7 @@
 > **Mata kuliah:** Pengolahan Citra Digital  
 > **Bahasa pemrograman:** Python  
 > **Fokus:** Pengembangan aplikasi perangkat lunak  
-> **Status:** Milestone 1–7 selesai (analisis, setup, audit dataset, persiapan data, baseline deteksi YOLO, crop & preprocessing, OCR & normalisasi baseline). Milestone 8+ (integrasi pipeline, UI, evaluasi menyeluruh, finalisasi) belum dimulai. Pembaruan: Nov 2026.
+> **Status:** Milestone 1–8 selesai (analisis, setup, audit dataset, persiapan data, baseline deteksi YOLO, crop & preprocessing, OCR & normalisasi baseline, integrasi pipeline & UI Streamlit). Milestone 9 (evaluasi menyeluruh & finalisasi) belum dimulai. Pembaruan: Nov 2026.
 
 Dokumen ini menjadi roadmap pelaksanaan proyek. Pengembangan dibagi menjadi fase/milestone agar setiap tahap mempunyai tujuan, aktivitas, penjelasan, dan keluaran yang dapat diperiksa sebelum melanjutkan ke tahap berikutnya.
 
@@ -19,7 +19,7 @@ Dokumen ini menjadi roadmap pelaksanaan proyek. Pengembangan dibagi menjadi fase
 | M5 — Baseline deteksi YOLO | Fase 5 | **Selesai** | `scripts/train_detector.py`, `scripts/evaluate_detector.py`, `src/alpro/detection/plate_detector.py`, `configs/detector.yaml` (yolov8n, CPU); experiment `yolov8n_baseline_m5_20261118_cpu` (early stop epoch 40, best 20). Evaluasi eksplisit: **val** P=0.941 R=0.896 mAP@50=0.901 mAP@50-95=0.715; **test (sekali)** P=0.983 R=0.948 mAP@50=0.955 mAP@50-95=0.761. Laporan `outputs/reports/detection/.../report.md`, visualisasi `outputs/visualizations/detection/.../{val,test}/` |
 | M6 — Crop & preprocessing | Fase 6 | **Selesai** | `src/alpro/preprocessing/{image_loader,plate_cropper,image_preprocessor}.py`, `scripts/run_preprocessing_experiment.py`, `configs/preprocessing.yaml` diperbarui; run val `m6_preprocessing_val_20261125` (107 img indexed, 20 curated seed 42, 10 varian, 105 ok/2 no_detection/0 crop_failed), artefak `outputs/visualizations/preprocessing/...` & laporan `outputs/reports/preprocessing/...` |
 | M7 — OCR & normalisasi | Fase 7 | **Selesai** | `src/alpro/recognition/{ocr_engine,text_normalizer}.py`, `scripts/evaluate_ocr.py`, `configs/ocr.yaml`; run val `m7_ocr_val_20261125` (107 img, curated 20×10 varian, index 107×2 varian, 414 rows, 0 run errors). GT terverifikasi=0 → **CER/WER/EMA belum diklaim**; laporan kualitatif/artefak tersedia di `outputs/reports/ocr/...` |
-| M8 — Integrasi pipeline & UI | Fase 8–9 | Belum dimulai | `app.py`/Streamlit sesuai keputusan M2 |
+| M8 — Integrasi pipeline & UI | Fase 8–9 | **Selesai** | `src/alpro/core/{result,pipeline}.py`, `src/alpro/config/settings.py`, `configs/pipeline.yaml`, `app.py` + `ui/components.py`, unit/integration tests (11 passed, mocked). Pipeline end-to-end tanpa UI; Streamlit menampilkan tahapan deteksi→crop→preprocess→OCR. |
 | M9 — Evaluasi & finalisasi | Fase 10–11 | Belum dimulai | Pengujian menyeluruh, laporan, artikel, demo |
 
 ## Gambaran umum proyek
@@ -397,9 +397,16 @@ Pipeline menjadi satu pintu pemanggilan proses ALPRO. Antarmuka tidak perlu meng
 - Integration test pipeline.
 - Contoh hasil end-to-end melalui pemanggilan Python.
 
+### Realisasi (aktual, M8)
+
+- **Keputusan M8 (rekomendasi diadopsi):** 8.1A class `PlateRecognitionPipeline.process_image(...) -> PipelineResult` (lazy-load detector/OCR, reusable UI/script/test); 8.2A default preprocessing `original_crop` (konservatif, belum konklusif kuantitatif) dengan pilihan varian dari config/UI; 8.3A default `top_confidence`, simpan semua deteksi, `no_detection` status jelas tanpa crash; 8.4A `app.py` + `ui/components.py` (upload, sidebar opsi, tampilan tahapan, raw/normalized/confidence, intermediate opsional, simpan artefak opsional); 8.5A default tidak simpan otomatis, tombol simpan ke `outputs/predictions/pipeline/<ts>/`; 8.6A `configs/pipeline.yaml` + `src/alpro/config/settings.py`; 8.7A pytest unit + integration mock detector/OCR; 8.8A lazy-load + `st.cache_resource`; 8.9A tidak klaim akurasi OCR kuantitatif tanpa GT terverifikasi.
+- **Implementasi:** `src/alpro/core/result.py`, `src/alpro/core/pipeline.py`, `src/alpro/core/__init__.py`, `src/alpro/config/settings.py`, `src/alpro/config/__init__.py`, `configs/pipeline.yaml`, `app.py`, `ui/components.py`.
+- **Testing:** `tests/unit/test_text_normalizer.py`, `test_plate_cropper.py`, `test_pipeline_result.py`, `test_settings.py`, `tests/integration/test_pipeline.py` (mocked detector/OCR). Hasil: **11 passed** (`pytest tests/unit tests/integration -q`).
+- **Catatan:** default inference `original_crop` dipilih konservatif; `gray_clahe` tersedia sebagai opsi. Tanpa GT OCR terverifikasi, UI menampilkan prediksi, bukan metrik kebenaran kuantitatif.
+
 ### Kriteria selesai
 
-Pipeline dapat dijalankan tanpa Streamlit dan tidak menghentikan seluruh proses ketika satu tahap gagal.
+Pipeline dapat dijalankan tanpa Streamlit dan tidak menghentikan seluruh proses ketika satu tahap gagal. *(Terpenuhi; verifikasi via pytest mock integration + py_compile/import smoke.)*
 
 ---
 
@@ -430,9 +437,15 @@ UI dibuat setelah pipeline inti berfungsi. Dengan demikian, perubahan pada model
 - Tampilan visual tahapan deteksi sampai OCR.
 - Petunjuk penggunaan aplikasi.
 
+### Realisasi (aktual, M8)
+
+- `app.py` (Streamlit) dibuat: upload gambar, sidebar config (weights/device/conf/iou/padding/varian preprocessing/intermediate/save), tampil annotated detection, crop, preprocessed, intermediate opsional, raw/normalized OCR, confidence/status, detail deteksi/OCR candidates, JSON result, simpan artefak opsional.
+- `ui/components.py` menyediakan helper tampilan gambar/summary; logika inti tetap di `PlateRecognitionPipeline`.
+- README diperbarui dengan cara run UI/pipeline/test.
+
 ### Kriteria selesai
 
-Pengguna dapat mengunggah gambar dan memperoleh hasil pemrosesan melalui antarmuka tanpa menjalankan script secara manual.
+Pengguna dapat mengunggah gambar dan memperoleh hasil pemrosesan melalui antarmuka tanpa menjalankan script secara manual. *(Terpenuhi; `streamlit run app.py`, verifikasi kode/py_compile. Smoke UI manual penuh disarankan oleh user.)*
 
 ---
 
@@ -525,7 +538,7 @@ Aplikasi dapat dijalankan oleh orang lain mengikuti README dan seluruh luaran tu
 | M5 — Baseline deteksi YOLO | 5 | **Selesai** | `yolov8n` CPU baseline, `best.pt/last.pt`, metrik val & test (sekali), visualisasi prediksi, modul deteksi & script train/eval, laporan eksperimen |
 | M6 — Plate crop & preprocessing OCR | 6 | **Selesai** | `image_loader.py`, `plate_cropper.py`, `image_preprocessor.py`, script eksperimen, 10 varian preprocessing, indeks 107 val + 20 curated visual, laporan/summary/manifest |
 | M7 — OCR & normalisasi teks | 7 | **Selesai** | `ocr_engine.py`, `text_normalizer.py`, `evaluate_ocr.py`, config OCR, prediksi raw+normalized+confidence, laporan kualitatif val; metrik CER/WER/EMA tertunda (GT terverifikasi belum ada) |
-| M8 — Integrasi pipeline & UI aplikasi | 8–9 | Belum dimulai | `pipeline.py`/`result.py`, integration test, Streamlit (`app.py`) & tampilan tahapan proses |
+| M8 — Integrasi pipeline & UI aplikasi | 8–9 | **Selesai** | `pipeline.py`/`result.py`, config pipeline, pytest unit+integration mock (11 passed), Streamlit `app.py` + komponen UI, tampilan tahapan deteksi→OCR |
 | M9 — Evaluasi menyeluruh & finalisasi | 10–11 | Belum dimulai | Pengujian end-to-end, metrik deteksi/OCR/aplikasi, analisis error, dokumentasi final, laporan/artikel/presentasi/demo |
 
 ## Catatan pengelolaan eksperimen
@@ -551,8 +564,8 @@ Jangan menetapkan target angka performa tanpa baseline. Tentukan target setelah 
 - [x] Fase 5 — Baseline deteksi *(training & evaluasi eksplisit val/test selesai, artefak & laporan tersedia)*
 - [x] Fase 6 — Cropping dan preprocessing *(modul crop/preprocess modular + eksperimen val terkontrol, artefak/laporan; pemilihan varian OCR final menunggu M7/GT teks)*
 - [x] Fase 7 — OCR dan normalisasi *(EasyOCR baseline + normalisasi non-spekulatif + artefak/laporan; evaluasi kuantitatif menunggu GT teks terverifikasi)*
-- [ ] Fase 8 — Integrasi pipeline
-- [ ] Fase 9 — Antarmuka aplikasi
+- [x] Fase 8 — Integrasi pipeline *(PlateRecognitionPipeline + PipelineResult + config + pytest mock integration)*
+- [x] Fase 9 — Antarmuka aplikasi *(Streamlit app.py upload + tahapan + save opsional; smoke manual UI disarankan)*
 - [ ] Fase 10 — Pengujian dan evaluasi
 - [ ] Fase 11 — Dokumentasi dan penyerahan
 

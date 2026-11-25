@@ -2,7 +2,7 @@
 
 ALPRO adalah proyek aplikasi pengenalan plat nomor kendaraan Indonesia berbasis pengolahan citra digital dan machine learning. Pipeline yang direncanakan meliputi deteksi plat nomor (YOLO), cropping, preprocessing citra (OpenCV), dan OCR (EasyOCR), dengan antarmuka pengguna berbasis Streamlit.
 
-> **Status (Milestone 2 — Repository & Environment):** fondasi repository, konfigurasi awal, dan environment sedang/baru disiapkan. Fitur deteksi, preprocessing, OCR, pipeline end-to-end, dan UI **belum diimplementasikan** pada tahap ini.
+> **Status (s.d. Milestone 8):** fondasi repo/environment, audit & persiapan dataset, baseline deteksi YOLO, crop/preprocessing, OCR/normalisasi baseline, serta **integrasi pipeline + UI Streamlit** sudah diimplementasikan. Evaluasi menyeluruh/finalisasi (Milestone 9) belum selesai. Metrik OCR kuantitatif (CER/WER/EMA) **belum diklaim** karena GT teks terverifikasi belum tersedia.
 
 ## Ruang Lingkup Awal
 - Input: gambar statis (upload).
@@ -77,9 +77,30 @@ pip show ultralytics opencv-python easyocr streamlit numpy pandas matplotlib pyt
 - **Jangan** mengunduh/mengekstrak ulang, memindahkan, atau mengubah file dataset mentah. Simpan hasil olahan di `data/interim/` atau `data/processed/`.
 - Detail sumber, metadata, jumlah aktual, temuan audit awal, dan kebijakan: lihat [`data/README.md`](data/README.md).
 
-## Antarmuka Aplikasi (Streamlit)
-- **`app.py` belum dibuat pada Milestone 2** (keputusan 4C). Entry point Streamlit akan dibuat pada **Milestone 9 — Streamlit User Interface** setelah pipeline inti tersedia.
-- Konfigurasi terkait UI dicatat sebagai rencana di `configs/app.yaml`.
+## Menjalankan Pipeline (Python, tanpa UI)
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+python -c "import sys; sys.path.insert(0,'src'); from alpro.core import PlateRecognitionPipeline; import cv2; p=PlateRecognitionPipeline(); img=cv2.imread('data/raw/indonesian_license_plate/test/images/<file>.jpg'); r=p.process_image(img); print(r.status, r.ocr['text_normalized'] if r.ocr else None)"
+```
+
+## Menjalankan UI (Streamlit)
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+streamlit run app.py
+```
+
+UI mendukung upload gambar, konfigurasi deteksi/crop/varian preprocessing, tampilan tahapan (annotated, crop, preprocessed, intermediate), hasil OCR raw+normalized+confidence, dan opsi simpan artefak ke `outputs/predictions/pipeline/<timestamp>/`.
+
+## Pengujian
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+pytest tests/unit tests/integration -q
+```
+
+Catatan: integration test pipeline menggunakan mock detector/OCR agar cepat dan deterministik; smoke test model nyata dilakukan terpisah.
 
 ## Pengujian
 - Kerangka direktori pengujian tersedia di `tests/unit/` dan `tests/integration/`.
