@@ -2,7 +2,7 @@
 
 ALPRO adalah proyek aplikasi pengenalan plat nomor kendaraan Indonesia berbasis pengolahan citra digital dan machine learning. Pipeline yang direncanakan meliputi deteksi plat nomor (YOLO), cropping, preprocessing citra (OpenCV), dan OCR (EasyOCR), dengan antarmuka pengguna berbasis Streamlit.
 
-> **Status (s.d. Milestone 8):** fondasi repo/environment, audit & persiapan dataset, baseline deteksi YOLO, crop/preprocessing, OCR/normalisasi baseline, serta **integrasi pipeline + UI Streamlit** sudah diimplementasikan. Evaluasi menyeluruh/finalisasi (Milestone 9) belum selesai. Metrik OCR kuantitatif (CER/WER/EMA) **belum diklaim** karena GT teks terverifikasi belum tersedia.
+> **Status (s.d. Milestone 9):** M1–M8 selesai dan M9 finalisasi/evaluasi menyeluruh telah dijalankan (pytest lulus, smoke pipeline end-to-end, laporan final M9). **Deteksi** memiliki metrik kuantitatif (val/test). **OCR kuantitatif (CER/WER/Exact Match) belum diklaim** karena GT teks terverifikasi belum tersedia (`gt_verified_available_count=0`).
 
 ## Ruang Lingkup Awal
 - Input: gambar statis (upload).
@@ -93,14 +93,21 @@ streamlit run app.py
 
 UI mendukung upload gambar, konfigurasi deteksi/crop/varian preprocessing, tampilan tahapan (annotated, crop, preprocessed, intermediate), hasil OCR raw+normalized+confidence, dan opsi simpan artefak ke `outputs/predictions/pipeline/<timestamp>/`.
 
-## Pengujian
+## Evaluasi Final (M9)
 
 ```powershell
 .\.venv\Scripts\Activate.ps1
 pytest tests/unit tests/integration -q
+.\.venv\Scripts\python.exe scripts/run_final_evaluation.py
 ```
 
-Catatan: integration test pipeline menggunakan mock detector/OCR agar cepat dan deterministik; smoke test model nyata dilakukan terpisah.
+Artefak M9:
+- `outputs/reports/final/m9_evaluation/m9_final_report.md`
+- `outputs/reports/final/m9_evaluation/m9_evaluation_summary.json`
+- `docs/m9_smoke_ui_checklist.md` (smoke UI manual)
+- `docs/m9_gt_ocr_verification_guide.md` (cara verifikasi GT OCR)
+
+Catatan: integration test pipeline menggunakan mock detector/OCR agar cepat dan deterministik. OCR kuantitatif hanya boleh diklaim setelah GT terverifikasi diisi dan dievaluasi.
 
 ## Pengujian
 - Kerangka direktori pengujian tersedia di `tests/unit/` dan `tests/integration/`.

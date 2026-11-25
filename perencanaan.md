@@ -4,7 +4,7 @@
 > **Mata kuliah:** Pengolahan Citra Digital  
 > **Bahasa pemrograman:** Python  
 > **Fokus:** Pengembangan aplikasi perangkat lunak  
-> **Status:** Milestone 1–8 selesai (analisis, setup, audit dataset, persiapan data, baseline deteksi YOLO, crop & preprocessing, OCR & normalisasi baseline, integrasi pipeline & UI Streamlit). Milestone 9 (evaluasi menyeluruh & finalisasi) belum dimulai. Pembaruan: Nov 2026.
+> **Status:** Milestone 1–9 selesai (analisis, setup, audit dataset, persiapan data, baseline deteksi YOLO, crop & preprocessing, OCR & normalisasi baseline, integrasi pipeline & UI Streamlit, evaluasi menyeluruh & finalisasi). OCR kuantitatif (CER/WER/EMA) **belum diklaim** karena GT teks terverifikasi belum tersedia; evaluator siap. Pembaruan: Nov 2026.
 
 Dokumen ini menjadi roadmap pelaksanaan proyek. Pengembangan dibagi menjadi fase/milestone agar setiap tahap mempunyai tujuan, aktivitas, penjelasan, dan keluaran yang dapat diperiksa sebelum melanjutkan ke tahap berikutnya.
 
@@ -20,7 +20,7 @@ Dokumen ini menjadi roadmap pelaksanaan proyek. Pengembangan dibagi menjadi fase
 | M6 — Crop & preprocessing | Fase 6 | **Selesai** | `src/alpro/preprocessing/{image_loader,plate_cropper,image_preprocessor}.py`, `scripts/run_preprocessing_experiment.py`, `configs/preprocessing.yaml` diperbarui; run val `m6_preprocessing_val_20261125` (107 img indexed, 20 curated seed 42, 10 varian, 105 ok/2 no_detection/0 crop_failed), artefak `outputs/visualizations/preprocessing/...` & laporan `outputs/reports/preprocessing/...` |
 | M7 — OCR & normalisasi | Fase 7 | **Selesai** | `src/alpro/recognition/{ocr_engine,text_normalizer}.py`, `scripts/evaluate_ocr.py`, `configs/ocr.yaml`; run val `m7_ocr_val_20261125` (107 img, curated 20×10 varian, index 107×2 varian, 414 rows, 0 run errors). GT terverifikasi=0 → **CER/WER/EMA belum diklaim**; laporan kualitatif/artefak tersedia di `outputs/reports/ocr/...` |
 | M8 — Integrasi pipeline & UI | Fase 8–9 | **Selesai** | `src/alpro/core/{result,pipeline}.py`, `src/alpro/config/settings.py`, `configs/pipeline.yaml`, `app.py` + `ui/components.py`, unit/integration tests (11 passed, mocked). Pipeline end-to-end tanpa UI; Streamlit menampilkan tahapan deteksi→crop→preprocess→OCR. |
-| M9 — Evaluasi & finalisasi | Fase 10–11 | Belum dimulai | Pengujian menyeluruh, laporan, artikel, demo |
+| M9 — Evaluasi & finalisasi | Fase 10–11 | **Selesai** | Pytest 11 passed; smoke pipeline end-to-end (`scripts/run_final_evaluation.py`) + laporan `outputs/reports/final/m9_evaluation/*`; checklist UI manual & panduan verifikasi GT OCR (`docs/`); README/perencanaan diperbarui. OCR kuantitatif belum diklaim (GT verified=0). |
 
 ## Gambaran umum proyek
 
@@ -483,9 +483,18 @@ Metrik harus disesuaikan dengan tugasnya. Metrik deteksi tidak sama dengan metri
 - Dokumentasi contoh keberhasilan dan kegagalan.
 - Analisis keterbatasan sistem.
 
+### Realisasi (aktual, M9)
+
+- **Pytest:** `tests/unit` + `tests/integration` = **11 passed**.
+- **Smoke pipeline end-to-end:** `scripts/run_final_evaluation.py` menghasilkan `outputs/reports/final/m9_evaluation/m9_final_report.md` dan `m9_evaluation_summary.json`. Hasil smoke (7 kasus): `ok=3`, `no_detection=2` (2 known val cases), `load_error=2` (invalid path/empty ndarray), avg elapsed ~798 ms (CPU, termasuk warmup).
+- **Deteksi (konsolidasi M5):** val P=0.9406 R=0.8958 mAP@50=0.9010 mAP@50-95=0.7146; test (sekali) P=0.9833 R=0.9483 mAP@50=0.9547 mAP@50-95=0.7614.
+- **OCR:** GT verified+readable=0, rows=414 (M7). **CER/WER/Exact Match belum diklaim**. Evaluator siap; panduan verifikasi: `docs/m9_gt_ocr_verification_guide.md`.
+- **UI:** checklist smoke manual `docs/m9_smoke_ui_checklist.md`; verifikasi browser manual disarankan.
+- **Keterbatasan dicatat:** 2 no-detection val, 4 empty-label provisional, duplikat intra-split train, GT OCR belum terverifikasi, EasyOCR confidence bukan akurasi GT, CPU-only, test tidak untuk tuning.
+
 ### Kriteria selesai
 
-Setiap klaim performa didukung data uji, metrik yang tepat, dan penjelasan prosedur pengujian.
+Setiap klaim performa didukung data uji, metrik yang tepat, dan penjelasan prosedur pengujian. *(Terpenuhi untuk deteksi/pipeline software; OCR kuantitatif secara eksplisit ditunda sampai GT terverifikasi tersedia.)*
 
 ---
 
@@ -519,9 +528,16 @@ Dokumentasi harus menggambarkan implementasi yang benar-benar dibuat dan hasil p
 - Presentasi dan bukti demonstrasi.
 - Arsip hasil evaluasi.
 
+### Realisasi (aktual, M9 - finalisasi teknis)
+
+- README diperbarui (status M9, cara run pipeline/UI/test/evaluasi, batasan OCR GT).
+- Laporan evaluasi final: `outputs/reports/final/m9_evaluation/`.
+- Checklist demo/UI smoke dan panduan GT OCR: `docs/`.
+- Draf laporan akademik/artikel/presentasi final tetap menjadi deliverable kelompok; template/artefak teknis sudah disiapkan, konten akademik dapat dilengkapi oleh tim.
+
 ### Kriteria selesai
 
-Aplikasi dapat dijalankan oleh orang lain mengikuti README dan seluruh luaran tugas tersedia.
+Aplikasi dapat dijalankan oleh orang lain mengikuti README dan seluruh luaran tugas tersedia. *(Terpenuhi untuk paket teknis/reproducibility; kelengkapan dokumen akademik kelas mengikuti kebutuhan kelompok.)*
 
 ---
 
@@ -539,7 +555,7 @@ Aplikasi dapat dijalankan oleh orang lain mengikuti README dan seluruh luaran tu
 | M6 — Plate crop & preprocessing OCR | 6 | **Selesai** | `image_loader.py`, `plate_cropper.py`, `image_preprocessor.py`, script eksperimen, 10 varian preprocessing, indeks 107 val + 20 curated visual, laporan/summary/manifest |
 | M7 — OCR & normalisasi teks | 7 | **Selesai** | `ocr_engine.py`, `text_normalizer.py`, `evaluate_ocr.py`, config OCR, prediksi raw+normalized+confidence, laporan kualitatif val; metrik CER/WER/EMA tertunda (GT terverifikasi belum ada) |
 | M8 — Integrasi pipeline & UI aplikasi | 8–9 | **Selesai** | `pipeline.py`/`result.py`, config pipeline, pytest unit+integration mock (11 passed), Streamlit `app.py` + komponen UI, tampilan tahapan deteksi→OCR |
-| M9 — Evaluasi menyeluruh & finalisasi | 10–11 | Belum dimulai | Pengujian end-to-end, metrik deteksi/OCR/aplikasi, analisis error, dokumentasi final, laporan/artikel/presentasi/demo |
+| M9 — Evaluasi menyeluruh & finalisasi | 10–11 | **Selesai** | Pytest + smoke end-to-end + laporan final M9 + checklist UI/panduan GT OCR + pembaruan README/perencanaan; OCR kuantitatif tertunda sampai GT terverifikasi ada |
 
 ## Catatan pengelolaan eksperimen
 
@@ -566,8 +582,8 @@ Jangan menetapkan target angka performa tanpa baseline. Tentukan target setelah 
 - [x] Fase 7 — OCR dan normalisasi *(EasyOCR baseline + normalisasi non-spekulatif + artefak/laporan; evaluasi kuantitatif menunggu GT teks terverifikasi)*
 - [x] Fase 8 — Integrasi pipeline *(PlateRecognitionPipeline + PipelineResult + config + pytest mock integration)*
 - [x] Fase 9 — Antarmuka aplikasi *(Streamlit app.py upload + tahapan + save opsional; smoke manual UI disarankan)*
-- [ ] Fase 10 — Pengujian dan evaluasi
-- [ ] Fase 11 — Dokumentasi dan penyerahan
+- [x] Fase 10 — Pengujian dan evaluasi *(pytest 11 passed, smoke end-to-end, konsolidasi metrik deteksi, OCR kuantitatif tertunda karena GT verified=0)*
+- [x] Fase 11 — Dokumentasi dan penyerahan *(README/laporan final M9/checklist/panduan GT diperbarui; deliverable akademik kelompok dapat dilengkapi dari artefak ini)*
 
 ## Referensi dataset
 
