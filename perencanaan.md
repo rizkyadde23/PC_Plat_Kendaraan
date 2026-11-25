@@ -4,7 +4,7 @@
 > **Mata kuliah:** Pengolahan Citra Digital  
 > **Bahasa pemrograman:** Python  
 > **Fokus:** Pengembangan aplikasi perangkat lunak  
-> **Status:** Milestone 1–5 selesai (analisis, setup, audit dataset, persiapan data, baseline deteksi YOLO). Milestone 6+ (crop/preprocessing, OCR, integrasi pipeline, UI, evaluasi menyeluruh, finalisasi) belum dimulai. Pembaruan: Nov 2026.
+> **Status:** Milestone 1–6 selesai (analisis, setup, audit dataset, persiapan data, baseline deteksi YOLO, crop & preprocessing eksperimen). Milestone 7+ (OCR, integrasi pipeline, UI, evaluasi menyeluruh, finalisasi) belum dimulai. Pembaruan: Nov 2026.
 
 Dokumen ini menjadi roadmap pelaksanaan proyek. Pengembangan dibagi menjadi fase/milestone agar setiap tahap mempunyai tujuan, aktivitas, penjelasan, dan keluaran yang dapat diperiksa sebelum melanjutkan ke tahap berikutnya.
 
@@ -17,7 +17,7 @@ Dokumen ini menjadi roadmap pelaksanaan proyek. Pengembangan dibagi menjadi fase
 | M3 — Audit dataset | Fase 3 | **Selesai** | `scripts/audit_dataset.py`; run `outputs/reports/dataset_audit/20261118_210535/` (**READY_WITH_WARNINGS**: 1245 img/lbl, 0 error struktur/pairing, 0 cross-split, 374 grup duplikat intra-split/1085 file, 4 label kosong, isu path `data.yaml` raw, tidak ada GT OCR) |
 | M4 — Persiapan dataset | Fase 4 | **Selesai** | `scripts/prepare_dataset.py`; `configs/dataset.yaml` (kerja), manifest `data/splits/*`, kerangka OCR + 50 kandidat `data/annotations/ocr/` (GT kosong/manual), laporan `outputs/reports/dataset_preparation/20261118_212026/`, `data/README.md` diperbarui; `data/raw/` tidak diubah |
 | M5 — Baseline deteksi YOLO | Fase 5 | **Selesai** | `scripts/train_detector.py`, `scripts/evaluate_detector.py`, `src/alpro/detection/plate_detector.py`, `configs/detector.yaml` (yolov8n, CPU); experiment `yolov8n_baseline_m5_20261118_cpu` (early stop epoch 40, best 20). Evaluasi eksplisit: **val** P=0.941 R=0.896 mAP@50=0.901 mAP@50-95=0.715; **test (sekali)** P=0.983 R=0.948 mAP@50=0.955 mAP@50-95=0.761. Laporan `outputs/reports/detection/.../report.md`, visualisasi `outputs/visualizations/detection/.../{val,test}/` |
-| M6 — Crop & preprocessing | Fase 6 | Belum dimulai | - |
+| M6 — Crop & preprocessing | Fase 6 | **Selesai** | `src/alpro/preprocessing/{image_loader,plate_cropper,image_preprocessor}.py`, `scripts/run_preprocessing_experiment.py`, `configs/preprocessing.yaml` diperbarui; run val `m6_preprocessing_val_20261125` (107 img indexed, 20 curated seed 42, 10 varian, 105 ok/2 no_detection/0 crop_failed), artefak `outputs/visualizations/preprocessing/...` & laporan `outputs/reports/preprocessing/...` |
 | M7 — OCR & normalisasi | Fase 7 | Belum dimulai | Bergantung ketersediaan/strategi GT teks untuk evaluasi kuantitatif |
 | M8 — Integrasi pipeline & UI | Fase 8–9 | Belum dimulai | `app.py`/Streamlit sesuai keputusan M2 |
 | M9 — Evaluasi & finalisasi | Fase 10–11 | Belum dimulai | Pengujian menyeluruh, laporan, artikel, demo |
@@ -315,9 +315,18 @@ Tidak semua operasi harus diterapkan sekaligus. Prapemrosesan diperlakukan sebag
 - Kumpulan contoh crop dan hasil preprocessing.
 - Catatan parameter serta perbandingan visual.
 
+### Realisasi (aktual, M6)
+
+- **Keputusan M6 (rekomendasi diadopsi):** 6.1A sampel eksperimen `val` split (107 gambar) dengan 20 curated seed 42 + indeks semua hasil; 6.2A crop top-confidence, `no_detection` dicatat/dilewati, padding 5% clamp ke batas; 6.3A matriks 10 varian terkontrol (`original_crop` s.d. `gray_clahe_adaptive_close`); 6.4A artefak di `outputs/visualizations/preprocessing/<experiment_id>/` dan `outputs/reports/preprocessing/<experiment_id>/`; 6.5A fokus perbandingan visual/artefak tanpa klaim metrik OCR; 6.6A API modular (`ImageLoader.load`, `PlateCropper.crop/crop_detections`, `ImagePreprocessor.process`); 6.7A update config + laporan.
+- **Implementasi:** `src/alpro/preprocessing/image_loader.py`, `plate_cropper.py`, `image_preprocessor.py`, `src/alpro/preprocessing/__init__.py` (export), `scripts/run_preprocessing_experiment.py`, `configs/preprocessing.yaml` diperbarui (defaults, pipeline baseline, matriks varian, metadata eksperimen).
+- **Run utama:** `m6_preprocessing_val_20261125` pada split `val` (107 gambar) dengan detektor M5 `runs/detect/models/trained/detection/yolov8n_baseline_m5_20261118_cpu/weights/best.pt` (CPU, conf 0.25, iou 0.45, imgsz 640). Hasil: **105 ok, 2 no_detection, 0 crop_failed**. Curated 20 sampel menghasilkan 20 output per varian (total 200 crop-varian tersimpan + intermediate per step).
+- **No-detection (val):** `IMG-20180108-WA0024_jpg.rf.f9fd66333357558710a1c39b2e7e639f.jpg`, `IMG-20180108-WA0104_jpg.rf.9463b0d9f63615c551f3ddb492cfd879.jpg` (dicatat di indeks/laporan; bukan kegagalan crop).
+- **Artefak:** `outputs/reports/preprocessing/m6_preprocessing_val_20261125/{report.md,summary.json,index.csv,curated_manifest.json}`; `outputs/visualizations/preprocessing/m6_preprocessing_val_20261125/curated/<sample>/` berisi `original_annotated.jpg`, `crop_0.jpg`, `variant_*.jpg`, dan `intermediate/<variant>/*.jpg`.
+- **Catatan metodologis:** M6 belum melakukan evaluasi OCR kuantitatif (GT teks belum terisi). Test set tidak digunakan untuk pemilihan parameter; pemilihan varian final untuk OCR ditunda hingga M7 dengan bukti/GT yang sesuai.
+
 ### Kriteria selesai
 
-Crop plat konsisten dan setiap operasi preprocessing dapat dipanggil serta diuji secara terpisah.
+Crop plat konsisten dan setiap operasi preprocessing dapat dipanggil serta diuji secara terpisah. *(Terpenuhi pada run val; perbandingan visual/artefak tersedia, pemilihan varian OCR final ditunda ke M7.)*
 
 ---
 
@@ -503,7 +512,7 @@ Aplikasi dapat dijalankan oleh orang lain mengikuti README dan seluruh luaran tu
 | M3 — Audit dataset | 3 | **Selesai** | Audit formal, laporan & visualisasi, temuan kualitas/split/duplikat/label kosong, status kesiapan data |
 | M4 — Persiapan dataset | 4 | **Selesai** | `configs/dataset.yaml` kerja, manifest `data/splits/`, kerangka & kandidat anotasi OCR (`data/annotations/ocr/`), laporan persiapan; deteksi siap baseline, GT OCR belum terisi |
 | M5 — Baseline deteksi YOLO | 5 | **Selesai** | `yolov8n` CPU baseline, `best.pt/last.pt`, metrik val & test (sekali), visualisasi prediksi, modul deteksi & script train/eval, laporan eksperimen |
-| M6 — Plate crop & preprocessing OCR | 6 | Belum dimulai | `plate_cropper.py`, `image_preprocessor.py`, hasil crop/preprocessing & perbandingan untuk OCR |
+| M6 — Plate crop & preprocessing OCR | 6 | **Selesai** | `image_loader.py`, `plate_cropper.py`, `image_preprocessor.py`, script eksperimen, 10 varian preprocessing, indeks 107 val + 20 curated visual, laporan/summary/manifest |
 | M7 — OCR & normalisasi teks | 7 | Belum dimulai | `ocr_engine.py`, `text_normalizer.py`, hasil OCR mentah/normalisasi; evaluasi kuantitatif bila GT teks tersedia |
 | M8 — Integrasi pipeline & UI aplikasi | 8–9 | Belum dimulai | `pipeline.py`/`result.py`, integration test, Streamlit (`app.py`) & tampilan tahapan proses |
 | M9 — Evaluasi menyeluruh & finalisasi | 10–11 | Belum dimulai | Pengujian end-to-end, metrik deteksi/OCR/aplikasi, analisis error, dokumentasi final, laporan/artikel/presentasi/demo |
@@ -529,7 +538,7 @@ Jangan menetapkan target angka performa tanpa baseline. Tentukan target setelah 
 - [x] Fase 3 — Audit dataset Roboflow *(audit formal + laporan/visualisasi, temuan terdokumentasi)*
 - [x] Fase 4 — Penyiapan dataset dan ground truth OCR *(config/manifest/kerangka & kandidat OCR siap; GT teks manual belum terisi)*
 - [x] Fase 5 — Baseline deteksi *(training & evaluasi eksplisit val/test selesai, artefak & laporan tersedia)*
-- [ ] Fase 6 — Cropping dan preprocessing
+- [x] Fase 6 — Cropping dan preprocessing *(modul crop/preprocess modular + eksperimen val terkontrol, artefak/laporan; pemilihan varian OCR final menunggu M7/GT teks)*
 - [ ] Fase 7 — OCR dan normalisasi
 - [ ] Fase 8 — Integrasi pipeline
 - [ ] Fase 9 — Antarmuka aplikasi

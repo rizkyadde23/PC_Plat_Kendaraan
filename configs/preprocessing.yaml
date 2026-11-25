@@ -1,8 +1,17 @@
-# Konfigurasi preprocessing citra (kerangka eksperimen)
-# Teknik final dipilih berdasarkan eksperimen (Milestone 6), bukan asumsi.
+# Konfigurasi preprocessing citra — ALPRO Milestone 6
+# Keputusan M6: A(val split, 20 curated + index semua), A(top-confidence + padding 5%),
+# A(matriks varian terkontrol), A(output outputs/*), A(fokus M6 tanpa klaim metrik OCR),
+# A(API modular), A(update config + laporan eksperimen).
+# Teknik final untuk OCR dipilih berdasarkan eksperimen/bukti, bukan asumsi.
 
+defaults:
+  padding_ratio: 0.05
+  crop_strategy: "top_confidence"  # top_confidence | all
+  min_crop_size: 8
+  save_intermediate: true
+
+# Baseline pipeline (dapat diaktifkan per-step untuk penggunaan umum/pipeline)
 pipeline:
-  # Urutan & aktivasi tahap akan ditentukan saat implementasi/eksperimen
   steps:
     - name: grayscale
       enabled: true
@@ -10,6 +19,7 @@ pipeline:
       enabled: false
       width: 320
       keep_aspect: true
+      interpolation: "linear"
     - name: denoise
       enabled: false
       method: "gaussian"   # gaussian | median | bilateral
@@ -21,12 +31,64 @@ pipeline:
       tile_grid_size: [8, 8]
     - name: threshold
       enabled: false
-      method: "otsu"        # otsu | adaptive
+      method: "otsu"        # otsu | adaptive | binary
     - name: morphology
       enabled: false
-      operation: "close"    # open | close
+      operation: "close"    # open | close | dilate | erode
       ksize: [3, 3]
 
-debug:
-  save_intermediate: false
-  output_dir: "outputs/visualizations/preprocessing"
+# Matriks varian terkontrol untuk eksperimen M6 (6.3A)
+variants:
+  - name: original_crop
+    steps: []
+  - name: grayscale
+    steps:
+      - {name: grayscale, enabled: true}
+  - name: gray_resize
+    steps:
+      - {name: grayscale, enabled: true}
+      - {name: resize, enabled: true, width: 320, keep_aspect: true, interpolation: "linear"}
+  - name: gray_denoise_gaussian
+    steps:
+      - {name: grayscale, enabled: true}
+      - {name: denoise, enabled: true, method: gaussian, ksize: 3}
+  - name: gray_denoise_median
+    steps:
+      - {name: grayscale, enabled: true}
+      - {name: denoise, enabled: true, method: median, ksize: 3}
+  - name: gray_clahe
+    steps:
+      - {name: grayscale, enabled: true}
+      - {name: contrast, enabled: true, method: clahe, clip_limit: 2.0, tile_grid_size: [8, 8]}
+  - name: gray_otsu
+    steps:
+      - {name: grayscale, enabled: true}
+      - {name: threshold, enabled: true, method: otsu}
+  - name: gray_adaptive
+    steps:
+      - {name: grayscale, enabled: true}
+      - {name: threshold, enabled: true, method: adaptive, block_size: 11, c: 2, adaptive_method: gaussian}
+  - name: gray_clahe_otsu
+    steps:
+      - {name: grayscale, enabled: true}
+      - {name: contrast, enabled: true, method: clahe, clip_limit: 2.0, tile_grid_size: [8, 8]}
+      - {name: threshold, enabled: true, method: otsu}
+  - name: gray_clahe_adaptive_close
+    steps:
+      - {name: grayscale, enabled: true}
+      - {name: contrast, enabled: true, method: clahe, clip_limit: 2.0, tile_grid_size: [8, 8]}
+      - {name: threshold, enabled: true, method: adaptive, block_size: 11, c: 2, adaptive_method: gaussian}
+      - {name: morphology, enabled: true, operation: close, ksize: [3, 3]}
+
+experiment:
+  split: "val"
+  curated_count: 20
+  curated_seed: 42
+  include_all_index: true
+  output_visualizations: "outputs/visualizations/preprocessing"
+  output_reports: "outputs/reports/preprocessing"
+  detector_weights: "runs/detect/models/trained/detection/yolov8n_baseline_m5_20261118_cpu/weights/best.pt"
+  detector_conf: 0.25
+  detector_iou: 0.45
+  detector_imgsz: 640
+  detector_device: "cpu"
