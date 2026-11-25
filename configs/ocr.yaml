@@ -1,0 +1,58 @@
+# Konfigurasi OCR & normalisasi — ALPRO Milestone 7
+# Keputusan M7 (adopsi rekomendasi): EasyOCR CPU-only, lang ['en'], detail=1,
+# paragraph=false; normalisasi ringan non-spekulatif; evaluasi kuantitatif hanya
+# pada GT terverifikasi; test set tidak dipakai tuning.
+
+engine:
+  name: "easyocr"
+  lang: ["en"]
+  gpu: false
+  detail: 1
+  paragraph: false
+  # decoder/beam params EasyOCR opsional; biarkan default jika null
+  decoder: null
+  beamWidth: 5
+  batch_size: 1
+  min_confidence: 0.0  # simpan semua kandidat; filter dilakukan di analisis/report
+
+normalization:
+  uppercase: true
+  strip: true
+  collapse_whitespace: true
+  # Karakter yang dipertahankan setelah normalisasi (regex class body)
+  allowed_pattern: "[A-Z0-9 -]"
+  replace_non_allowed_with: ""  # hapus karakter non-allowed
+  # Koreksi spekulatif O/0, I/1, B/8: DEFAULT OFF (7.4A)
+  char_substitution:
+    enabled: false
+    map: {}
+
+evaluation:
+  # Kuantitatif hanya dihitung jika GT valid terverifikasi
+  require_verified: true
+  exclude_unreadable: true
+  metrics: ["cer", "wer", "exact_match"]
+  # path kandidat GT (diisi manual; kosong = evaluasi kuantitatif dilewati dengan catatan)
+  gt_candidates_csv: "data/annotations/ocr/ocr_annotation_candidates.csv"
+  gt_annotations_csv: "data/annotations/ocr/ocr_annotations.csv"  # opsional jika user membuat salinan terisi
+
+experiment:
+  detector_weights: "runs/detect/models/trained/detection/yolov8n_baseline_m5_20261118_cpu/weights/best.pt"
+  detector_conf: 0.25
+  detector_iou: 0.45
+  detector_imgsz: 640
+  detector_device: "cpu"
+  split: "val"
+  curated_count: 20
+  curated_seed: 42
+  # Matriks penuh 10 varian pada curated subset (kualitatif terkontrol)
+  curated_variants: "all"  # all = semua varian dari configs/preprocessing.yaml
+  # Indeks val lebih luas: 1-2 varian untuk runtime CPU wajar
+  index_variants: ["original_crop", "gray_clahe"]
+  crop_strategy: "top_confidence"
+  padding_ratio: 0.05
+  min_crop_size: 8
+  output_reports: "outputs/reports/ocr"
+  output_visualizations: "outputs/visualizations/ocr"
+  save_curated_visuals: true
+  save_index_visuals: false

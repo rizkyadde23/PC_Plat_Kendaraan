@@ -4,7 +4,7 @@
 > **Mata kuliah:** Pengolahan Citra Digital  
 > **Bahasa pemrograman:** Python  
 > **Fokus:** Pengembangan aplikasi perangkat lunak  
-> **Status:** Milestone 1–6 selesai (analisis, setup, audit dataset, persiapan data, baseline deteksi YOLO, crop & preprocessing eksperimen). Milestone 7+ (OCR, integrasi pipeline, UI, evaluasi menyeluruh, finalisasi) belum dimulai. Pembaruan: Nov 2026.
+> **Status:** Milestone 1–7 selesai (analisis, setup, audit dataset, persiapan data, baseline deteksi YOLO, crop & preprocessing, OCR & normalisasi baseline). Milestone 8+ (integrasi pipeline, UI, evaluasi menyeluruh, finalisasi) belum dimulai. Pembaruan: Nov 2026.
 
 Dokumen ini menjadi roadmap pelaksanaan proyek. Pengembangan dibagi menjadi fase/milestone agar setiap tahap mempunyai tujuan, aktivitas, penjelasan, dan keluaran yang dapat diperiksa sebelum melanjutkan ke tahap berikutnya.
 
@@ -18,7 +18,7 @@ Dokumen ini menjadi roadmap pelaksanaan proyek. Pengembangan dibagi menjadi fase
 | M4 — Persiapan dataset | Fase 4 | **Selesai** | `scripts/prepare_dataset.py`; `configs/dataset.yaml` (kerja), manifest `data/splits/*`, kerangka OCR + 50 kandidat `data/annotations/ocr/` (GT kosong/manual), laporan `outputs/reports/dataset_preparation/20261118_212026/`, `data/README.md` diperbarui; `data/raw/` tidak diubah |
 | M5 — Baseline deteksi YOLO | Fase 5 | **Selesai** | `scripts/train_detector.py`, `scripts/evaluate_detector.py`, `src/alpro/detection/plate_detector.py`, `configs/detector.yaml` (yolov8n, CPU); experiment `yolov8n_baseline_m5_20261118_cpu` (early stop epoch 40, best 20). Evaluasi eksplisit: **val** P=0.941 R=0.896 mAP@50=0.901 mAP@50-95=0.715; **test (sekali)** P=0.983 R=0.948 mAP@50=0.955 mAP@50-95=0.761. Laporan `outputs/reports/detection/.../report.md`, visualisasi `outputs/visualizations/detection/.../{val,test}/` |
 | M6 — Crop & preprocessing | Fase 6 | **Selesai** | `src/alpro/preprocessing/{image_loader,plate_cropper,image_preprocessor}.py`, `scripts/run_preprocessing_experiment.py`, `configs/preprocessing.yaml` diperbarui; run val `m6_preprocessing_val_20261125` (107 img indexed, 20 curated seed 42, 10 varian, 105 ok/2 no_detection/0 crop_failed), artefak `outputs/visualizations/preprocessing/...` & laporan `outputs/reports/preprocessing/...` |
-| M7 — OCR & normalisasi | Fase 7 | Belum dimulai | Bergantung ketersediaan/strategi GT teks untuk evaluasi kuantitatif |
+| M7 — OCR & normalisasi | Fase 7 | **Selesai** | `src/alpro/recognition/{ocr_engine,text_normalizer}.py`, `scripts/evaluate_ocr.py`, `configs/ocr.yaml`; run val `m7_ocr_val_20261125` (107 img, curated 20×10 varian, index 107×2 varian, 414 rows, 0 run errors). GT terverifikasi=0 → **CER/WER/EMA belum diklaim**; laporan kualitatif/artefak tersedia di `outputs/reports/ocr/...` |
 | M8 — Integrasi pipeline & UI | Fase 8–9 | Belum dimulai | `app.py`/Streamlit sesuai keputusan M2 |
 | M9 — Evaluasi & finalisasi | Fase 10–11 | Belum dimulai | Pengujian menyeluruh, laporan, artikel, demo |
 
@@ -356,9 +356,20 @@ OCR merupakan komponen pengenalan teks, bukan detektor lokasi plat. Simpan predi
 - Contoh hasil OCR dari beberapa kondisi citra.
 - Catatan konfigurasi OCR dan keterbatasannya.
 
+### Realisasi (aktual, M7)
+
+- **Keputusan M7 (rekomendasi diadopsi):** 7.1A EasyOCR CPU-only (`en`, gpu=false, detail=1, paragraph=false, simpan kandidat mentah+confidence); 7.2A mode curated kualitatif + index luas, kuantitatif hanya jika GT `verified=true & readable & plate_text_gt non-empty` (jika tidak ada: pipeline/evaluator siap, metrik tidak diklaim); 7.3A curated 10 varian M6, index 2 varian (`original_crop`,`gray_clahe`); 7.4A normalisasi ringan non-spekulatif (uppercase/strip/collapse/allowed `[A-Z0-9 -]`), `text_raw` terpisah, koreksi O/0/I/1/B/8 **default OFF**; 7.5A bukti berjenjang (CER/WER/EMA hanya GT terverifikasi; selain itu kualitatif terstruktur); 7.6A status `no_detection/crop_failed/empty_ocr/ocr_error` tanpa crash; 7.7A output `predictions.csv/json`, `summary.json`, `report.md`; 7.8A fokus recognition + script evaluasi, kompatibel untuk M8.
+- **Implementasi:** `configs/ocr.yaml`; `src/alpro/recognition/{ocr_engine.py,text_normalizer.py,__init__.py}`; `scripts/evaluate_ocr.py`.
+- **Run utama:** `m7_ocr_val_20261125` (split val, 107 gambar, 20 curated seed 42). Detector M5 `best.pt` CPU; EasyOCR CPU. **414 baris prediksi, 0 run errors**.
+- **Hasil kualitatif (GT terverifikasi=0, metrik tidak diklaim):**
+  - *Curated 20×10 varian*: `original_crop/grayscale` OCR OK 18/20 empty 2; `gray_resize` 19/20; `gray_denoise_median` 18/20; `gray_clahe` 18/20 (avg conf OK tertinggi ~0.373); `gray_clahe_otsu` 17/20; `gray_denoise_gaussian` 16/20; `gray_otsu` 14/20; `gray_adaptive` 3/20 empty 17; `gray_clahe_adaptive_close` 1/20 empty 19. Varian adaptive/binary agresif cenderung menghasilkan empty OCR pada subset ini.
+  - *Index 107×2 varian*: `original_crop` OK 96, empty 9, det/crop fail 2; `gray_clahe` OK 94, empty 11, det/crop fail 2. Dua `no_detection` sama dengan temuan M6: `IMG-20180108-WA0024...jpg`, `IMG-20180108-WA0104...jpg`.
+- **Artefak:** `outputs/reports/ocr/m7_ocr_val_20261125/{report.md,summary.json,predictions.csv,predictions.json}`; visualisasi curated `outputs/visualizations/ocr/m7_ocr_val_20261125/curated/`.
+- **Catatan metodologis:** Belum ada GT teks terverifikasi (`data/annotations/ocr/ocr_annotation_candidates.csv` masih kosong/`verified=false`), sehingga **CER/WER/Exact Match belum dapat diklaim**. Perbandingan varian di atas bersifat kualitatif operasional (OCR OK/empty/confidence), bukan bukti akurasi teks final. `data/raw/` tidak diubah; test set tidak dipakai tuning.
+
 ### Kriteria selesai
 
-OCR dapat dijalankan pada crop plat dan menghasilkan status serta teks prediksi yang dapat ditelusuri.
+OCR dapat dijalankan pada crop plat dan menghasilkan status serta teks prediksi yang dapat ditelusuri. *(Terpenuhi; evaluasi kuantitatif OCR menunggu anotasi GT terverifikasi.)*
 
 ---
 
@@ -513,7 +524,7 @@ Aplikasi dapat dijalankan oleh orang lain mengikuti README dan seluruh luaran tu
 | M4 — Persiapan dataset | 4 | **Selesai** | `configs/dataset.yaml` kerja, manifest `data/splits/`, kerangka & kandidat anotasi OCR (`data/annotations/ocr/`), laporan persiapan; deteksi siap baseline, GT OCR belum terisi |
 | M5 — Baseline deteksi YOLO | 5 | **Selesai** | `yolov8n` CPU baseline, `best.pt/last.pt`, metrik val & test (sekali), visualisasi prediksi, modul deteksi & script train/eval, laporan eksperimen |
 | M6 — Plate crop & preprocessing OCR | 6 | **Selesai** | `image_loader.py`, `plate_cropper.py`, `image_preprocessor.py`, script eksperimen, 10 varian preprocessing, indeks 107 val + 20 curated visual, laporan/summary/manifest |
-| M7 — OCR & normalisasi teks | 7 | Belum dimulai | `ocr_engine.py`, `text_normalizer.py`, hasil OCR mentah/normalisasi; evaluasi kuantitatif bila GT teks tersedia |
+| M7 — OCR & normalisasi teks | 7 | **Selesai** | `ocr_engine.py`, `text_normalizer.py`, `evaluate_ocr.py`, config OCR, prediksi raw+normalized+confidence, laporan kualitatif val; metrik CER/WER/EMA tertunda (GT terverifikasi belum ada) |
 | M8 — Integrasi pipeline & UI aplikasi | 8–9 | Belum dimulai | `pipeline.py`/`result.py`, integration test, Streamlit (`app.py`) & tampilan tahapan proses |
 | M9 — Evaluasi menyeluruh & finalisasi | 10–11 | Belum dimulai | Pengujian end-to-end, metrik deteksi/OCR/aplikasi, analisis error, dokumentasi final, laporan/artikel/presentasi/demo |
 
@@ -539,7 +550,7 @@ Jangan menetapkan target angka performa tanpa baseline. Tentukan target setelah 
 - [x] Fase 4 — Penyiapan dataset dan ground truth OCR *(config/manifest/kerangka & kandidat OCR siap; GT teks manual belum terisi)*
 - [x] Fase 5 — Baseline deteksi *(training & evaluasi eksplisit val/test selesai, artefak & laporan tersedia)*
 - [x] Fase 6 — Cropping dan preprocessing *(modul crop/preprocess modular + eksperimen val terkontrol, artefak/laporan; pemilihan varian OCR final menunggu M7/GT teks)*
-- [ ] Fase 7 — OCR dan normalisasi
+- [x] Fase 7 — OCR dan normalisasi *(EasyOCR baseline + normalisasi non-spekulatif + artefak/laporan; evaluasi kuantitatif menunggu GT teks terverifikasi)*
 - [ ] Fase 8 — Integrasi pipeline
 - [ ] Fase 9 — Antarmuka aplikasi
 - [ ] Fase 10 — Pengujian dan evaluasi
