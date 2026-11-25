@@ -1,4 +1,4 @@
-"""ALPRO Streamlit app - Milestone 8.
+"""ALPRO Streamlit app - Milestone 8/9 UI refresh.
 
 UI memanggil PlateRecognitionPipeline; logika inti tetap di modul src/alpro.
 """
@@ -23,11 +23,15 @@ if str(SRC_DIR) not in sys.path:
 from alpro.core.pipeline import PlateRecognitionPipeline  # noqa: E402
 from alpro.config.settings import load_pipeline_config  # noqa: E402
 from ui.components import show_image, show_result_summary  # noqa: E402
+from ui.styles import inject_css  # noqa: E402
 
 
-st.set_page_config(page_title="ALPRO - Plate Recognition", layout="wide")
-st.title("ALPRO — Automatic License Plate Recognition Online")
-st.caption("Milestone 8: Integrasi pipeline + UI. Prediksi OCR ditampilkan apa adanya; evaluasi kuantitatif membutuhkan GT terverifikasi.")
+st.set_page_config(page_title="ALPRO - Plate Recognition", page_icon=":car:", layout="wide")
+inject_css()
+
+st.markdown('<div style="margin-top: 1rem; margin-bottom: 0.20rem;"><span class="alpro-badge">ALPRO • Plate Recognition Demo</span></div>', unsafe_allow_html=True)
+st.title("ALPRO — Pengenalan Plat Nomor Kendaraan")
+st.caption("Unggah gambar kendaraan, lalu sistem akan mendeteksi plat, memotong area plat, memproses gambar, dan membaca teksnya. Hasil OCR adalah prediksi model, bukan klaim akurasi ground truth.")
 
 
 @st.cache_resource(show_spinner=False)
@@ -49,45 +53,124 @@ def decode_upload(uploaded_file) -> np.ndarray | None:
     return img
 
 
-with st.sidebar:
-    st.header("Konfigurasi")
-    config_path = st.text_input("Pipeline config", value="configs/pipeline.yaml")
-    base_cfg = load_pipeline_config(config_path) if Path(config_path).exists() or (PROJECT_ROOT / config_path).exists() else {}
-    det_cfg = base_cfg.get("detector", {}) if isinstance(base_cfg, dict) else {}
-    pre_cfg_path = (base_cfg.get("preprocessing", {}) or {}).get("config_path", "configs/preprocessing.yaml") if isinstance(base_cfg, dict) else "configs/preprocessing.yaml"
-    weights = st.text_input("Detector weights", value=str(det_cfg.get("weights", "runs/detect/models/trained/detection/yolov8n_baseline_m5_20261118_cpu/weights/best.pt")))
-    device = st.selectbox("Device", options=["cpu"], index=0)
-    conf = st.slider("Detection conf", 0.05, 1.0, float(det_cfg.get("conf", 0.25)), 0.05)
-    iou = st.slider("Detection IoU", 0.05, 1.0, float(det_cfg.get("iou", 0.45)), 0.05)
-    padding = st.slider("Crop padding ratio", 0.0, 0.3, float((base_cfg.get("crop", {}) or {}).get("padding_ratio", 0.05)), 0.01)
+# Load default config for initial values
+default_config_path = "configs/pipeline.yaml"
+try:
+    initial_cfg = load_pipeline_config(default_config_path)
+except Exception:
+    initial_cfg = {}
+initial_det = initial_cfg.get("detector", {}) if isinstance(initial_cfg, dict) else {}
+initial_crop = initial_cfg.get("crop", {}) if isinstance(initial_cfg, dict) else {}
+initial_pre = initial_cfg.get("preprocessing", {}) if isinstance(initial_cfg, dict) else {}
 
-    # variant options
+
+with st.sidebar:
+    st.markdown("## Pengaturan")
+    st.markdown('<div class="alpro-help">Atur cara sistem membaca plat. Default sudah bisa dipakai; ubah jika hasil belum sesuai.</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="alpro-card-title">Pengaturan Mudah</div>', unsafe_allow_html=True)
+
+    conf = st.slider(
+        "Tingkat keyakinan deteksi",
+        min_value=0.05,
+        max_value=1.0,
+        value=float(initial_det.get("conf", 0.25)),
+        step=0.05,
+        help="Seberapa yakin sistem sebelum menandai area sebagai plat. Lebih tinggi = lebih ketat; lebih rendah = lebih sensitif.",
+    )
+    st.markdown('<div class="alpro-help">Jika plat tidak terdeteksi, coba turunkan sedikit. Jika banyak deteksi salah, coba naikkan.</div>', unsafe_allow_html=True)
+
+    iou = st.slider(
+        "Toleransi tumpang tindih deteksi",
+        min_value=0.05,
+        max_value=1.0,
+        value=float(initial_det.get("iou", 0.45)),
+        step=0.05,
+        help="Mengatur bagaimana sistem menggabungkan kotak deteksi yang saling tumpang tindih. Biasanya biarkan default.",
+    )
+    st.markdown('<div class="alpro-help">Umumnya tidak perlu diubah. Ubah hanya jika kotak deteksi terlihat ganda atau kurang pas.</div>', unsafe_allow_html=True)
+
+    padding = st.slider(
+        "Margin potongan plat",
+        min_value=0.0,
+        max_value=0.30,
+        value=float(initial_crop.get("padding_ratio", 0.05)),
+        step=0.01,
+        help="Menambah sedikit area di sekitar plat saat dipotong agar karakter di tepi tidak terpotong.",
+    )
+    st.markdown('<div class="alpro-help">Nilai kecil (0.03–0.08) biasanya cukup. Terlalu besar bisa membawa latar belakang berlebih.</div>', unsafe_allow_html=True)
+
+    # Variants
     try:
-        tmp_pipeline = PlateRecognitionPipeline(config_path=config_path)
+        tmp_pipeline = PlateRecognitionPipeline(config_path=default_config_path)
         variant_options = tmp_pipeline.get_preprocessing_variants()
     except Exception:
         variant_options = ["original_crop"]
-    default_variant = (base_cfg.get("preprocessing", {}) or {}).get("default_variant", "original_crop")
+    default_variant = str(initial_pre.get("default_variant", "original_crop"))
     if default_variant not in variant_options:
         default_variant = variant_options[0]
-    variant = st.selectbox("Preprocessing variant", options=variant_options, index=variant_options.index(default_variant))
-    show_intermediate = st.checkbox("Tampilkan intermediate preprocessing", value=True)
-    save_result = st.checkbox("Simpan hasil ke outputs/", value=False)
+
+    variant = st.selectbox(
+        "Mode pemrosesan gambar",
+        options=variant_options,
+        index=variant_options.index(default_variant),
+        help="Cara menyiapkan gambar plat sebelum dibaca OCR. 'original_crop' paling natural; opsi lain mencoba meningkatkan kontras/binerisasi.",
+    )
+    st.markdown('<div class="alpro-help">Mulai dari <b>original_crop</b>. Coba <b>gray_clahe</b> atau mode lain jika teks sulit terbaca.</div>', unsafe_allow_html=True)
+
+    show_intermediate = st.checkbox(
+        "Tampilkan langkah pemrosesan antara",
+        value=False,
+        help="Menampilkan hasil tiap tahap preprocessing. Berguna untuk memahami proses, tapi membuat tampilan lebih panjang.",
+    )
+    save_result = st.checkbox(
+        "Simpan hasil ke folder outputs",
+        value=False,
+        help="Menyimpan gambar hasil dan data prediksi ke outputs/predictions/pipeline/<waktu>/.",
+    )
+
+    with st.expander("Pengaturan Lanjutan (Teknis)"):
+        st.caption("Biasanya tidak perlu diubah oleh pengguna umum.")
+        config_path = st.text_input("Pipeline config", value=default_config_path, help="File konfigurasi pipeline YAML.")
+        weights = st.text_input(
+            "Detector weights",
+            value=str(initial_det.get("weights", "runs/detect/models/trained/detection/yolov8n_baseline_m5_20261118_cpu/weights/best.pt")),
+            help="Path bobot model deteksi YOLO (.pt).",
+        )
+        device = st.selectbox("Device", options=["cpu"], index=0, help="Perangkat inferensi. Saat ini disetel CPU.")
 
 
-uploaded = st.file_uploader("Upload gambar kendaraan/plat", type=["jpg", "jpeg", "png", "bmp", "webp"])
-run = st.button("Proses Gambar", type="primary", disabled=uploaded is None)
+# Main content
+left, right = st.columns([1.05, 1], gap="large")
 
-if uploaded is not None:
-    image = decode_upload(uploaded)
-    if image is None:
-        st.error("Gagal membaca file gambar. Pastikan format gambar valid.")
+with left:
+    st.markdown('<div class="alpro-card">', unsafe_allow_html=True)
+    st.markdown("### 1. Upload Gambar")
+    st.markdown('<div class="alpro-help">Format: JPG, JPEG, PNG, BMP, WEBP. Gunakan foto yang jelas agar plat mudah terbaca.</div>', unsafe_allow_html=True)
+    uploaded = st.file_uploader("Pilih gambar kendaraan/plat", type=["jpg", "jpeg", "png", "bmp", "webp"], label_visibility="collapsed")
+    run = st.button("Proses Gambar", type="primary", disabled=uploaded is None, use_container_width=True)
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    if uploaded is not None:
+        image = decode_upload(uploaded)
+        if image is None:
+            st.error("Gagal membaca file gambar. Pastikan format gambar valid.")
+        else:
+            st.markdown('<div class="alpro-card">', unsafe_allow_html=True)
+            st.markdown("### Gambar Input")
+            st.image(cv2.cvtColor(image, cv2.COLOR_BGR2RGB), caption=uploaded.name, use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True)
     else:
-        st.subheader("Input")
-        st.image(cv2.cvtColor(image, cv2.COLOR_BGR2RGB), caption=uploaded.name, use_container_width=True)
+        image = None
+        st.markdown('<div class="alpro-card-muted">', unsafe_allow_html=True)
+        st.markdown("**Tips foto yang baik**")
+        st.markdown("- Plat terlihat jelas dan tidak terlalu blur\n- Pencahayaan cukup\n- Plat tidak terlalu kecil dalam gambar\n- Sudut pengambilan tidak terlalu miring")
+        st.markdown("</div>", unsafe_allow_html=True)
 
-        if run:
-            with st.spinner("Memuat pipeline dan memproses gambar..."):
+with right:
+    if uploaded is not None and image is not None and run:
+        with st.spinner("Memproses gambar... Sistem sedang mendeteksi dan membaca plat."):
+            try:
                 pipeline = get_pipeline(config_path, weights, device)
                 result = pipeline.process_image(
                     image,
@@ -98,40 +181,67 @@ if uploaded is not None:
                     return_images=True,
                 )
                 result.meta["input_filename"] = uploaded.name
+            except Exception as e:
+                st.error(f"Terjadi kesalahan saat memproses gambar: {e}")
+                st.stop()
 
-            result_dict = result.to_dict(include_images=False)
-            show_result_summary(result_dict)
+        result_dict = result.to_dict(include_images=False)
+        show_result_summary(result_dict)
 
-            col1, col2 = st.columns(2)
-            with col1:
-                ann = result.meta.get("annotated_image") if isinstance(result.meta, dict) else None
-                show_image("Deteksi (annotated)", ann)
-                crop_img = result.crop.get("image") if isinstance(result.crop, dict) else None
-                show_image("Crop plat", crop_img)
-            with col2:
-                pre_img = result.preprocessing.get("image") if isinstance(result.preprocessing, dict) else None
-                show_image(f"Preprocessing ({variant})", pre_img)
-                if show_intermediate and isinstance(result.preprocessing, dict):
-                    inter = result.preprocessing.get("intermediate") or {}
-                    if inter:
-                        st.markdown("**Intermediate steps**")
-                        for k, v in inter.items():
+        ann = result.meta.get("annotated_image") if isinstance(result.meta, dict) else None
+        crop_img = result.crop.get("image") if isinstance(result.crop, dict) else None
+        pre_img = result.preprocessing.get("image") if isinstance(result.preprocessing, dict) else None
+        inter = {}
+        if show_intermediate and isinstance(result.preprocessing, dict):
+            inter = result.preprocessing.get("intermediate") or {}
+
+        has_visual = any(isinstance(img, np.ndarray) for img in [ann, crop_img, pre_img]) or bool(inter)
+        if has_visual:
+            st.markdown('<div class="alpro-card">', unsafe_allow_html=True)
+            st.markdown("### 2. Tahapan Visual")
+            v1, v2 = st.columns(2)
+            with v1:
+                show_image("Deteksi Plat", ann, caption="Kotak hijau menunjukkan area plat yang terdeteksi.")
+                show_image("Hasil Potongan Plat", crop_img, caption="Area plat yang dipotong untuk dibaca OCR.")
+            with v2:
+                show_image(f"Hasil Pemrosesan ({variant})", pre_img, caption="Gambar setelah disiapkan untuk OCR.")
+                if inter:
+                    st.markdown("**Langkah pemrosesan antara**")
+                    for k, v in inter.items():
+                        if isinstance(v, np.ndarray):
                             st.image(cv2.cvtColor(v, cv2.COLOR_BGR2RGB) if v.ndim == 3 else v, caption=k, use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
-            with st.expander("Detail deteksi"):
-                st.json(result_dict.get("detections", []))
-            with st.expander("Detail OCR candidates"):
-                ocr = result_dict.get("ocr") or {}
-                st.json(ocr.get("candidates", []))
-            with st.expander("Pipeline JSON (tanpa image array)"):
-                st.json(result_dict)
+        with st.expander("Detail Teknis (Opsional)"):
+            st.caption("Bagian ini untuk kebutuhan debugging/evaluasi teknis.")
+            st.markdown("**Deteksi**")
+            st.json(result_dict.get("detections", []))
+            st.markdown("**Kandidat OCR**")
+            ocr = result_dict.get("ocr") or {}
+            st.json(ocr.get("candidates", []))
+            st.markdown("**Waktu proses (ms)**")
+            st.json(result_dict.get("timings_ms", {}))
+            st.markdown("**Pipeline JSON (tanpa image array)**")
+            st.json(result_dict)
 
-            if save_result:
-                ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-                out_dir = PROJECT_ROOT / "outputs" / "predictions" / "pipeline" / ts
-                paths = pipeline.save_result(result, out_dir)
-                st.success(f"Hasil disimpan ke: {out_dir}")
+        if save_result:
+            ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+            out_dir = PROJECT_ROOT / "outputs" / "predictions" / "pipeline" / ts
+            paths = pipeline.save_result(result, out_dir)
+            st.success(f"Hasil disimpan ke: {out_dir}")
+            with st.expander("File tersimpan"):
                 st.json(paths)
 
+    elif uploaded is not None and image is not None:
+        st.markdown('<div class="alpro-card-muted">', unsafe_allow_html=True)
+        st.markdown("### 2. Siap Diproses")
+        st.markdown("Klik **Proses Gambar** untuk menjalankan deteksi plat dan pembacaan OCR.")
+        st.markdown("</div>", unsafe_allow_html=True)
+    else:
+        st.markdown('<div class="alpro-card-muted">', unsafe_allow_html=True)
+        st.markdown("### 2. Hasil Akan Muncul di Sini")
+        st.markdown("Setelah gambar diunggah dan diproses, sistem akan menampilkan status, teks plat, dan tahapan visual.")
+        st.markdown("</div>", unsafe_allow_html=True)
+
 st.divider()
-st.markdown("**Catatan:** M8 berfokus pada integrasi dan demonstrasi pipeline. Tanpa GT OCR terverifikasi, hasil OCR adalah prediksi model dan belum dievaluasi kuantitatif (CER/WER/EMA).")
+st.caption("ALPRO Demo • Tema putih minimalis • OCR adalah prediksi model; evaluasi kuantitatif memerlukan ground truth terverifikasi.")
