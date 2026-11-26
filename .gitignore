@@ -33,8 +33,6 @@ htmlcov/
 # ENVIRONMENT & SECRETS
 # ==========================================
 .env
-.env.*
-.env.example
 
 .streamlit/secrets.toml
 
