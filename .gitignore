@@ -33,7 +33,6 @@ htmlcov/
 # ENVIRONMENT & SECRETS
 # ==========================================
 .env
-
 .streamlit/secrets.toml
 
 # ==========================================
@@ -63,15 +62,12 @@ data/splits/*
 # Pretrained models
 models/pretrained/*
 
-# Trained models
-models/trained/*
-
 # Keep empty directory markers
 !models/pretrained/.gitkeep
-!models/trained/.gitkeep
 
 # Model weights
 *.pt
+!best.pt
 *.pth
 *.onnx
 *.engine
@@ -87,6 +83,7 @@ outputs/reports/*
 
 # Keep empty directory markers
 !outputs/predictions/.gitkeep
+!outputs/predictions/pipeline/.gitkeep
 !outputs/visualizations/.gitkeep
 !outputs/reports/.gitkeep
 

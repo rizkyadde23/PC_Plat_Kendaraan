@@ -6,14 +6,14 @@ pipeline:
   device: "cpu"
 
 detector:
-  weights: "runs/detect/models/trained/detection/yolov8n_baseline_m5_20261118_cpu/weights/best.pt"
+  weights: "models/trained/detection/best.pt"
   conf: 0.25
   iou: 0.45
   imgsz: 640
   max_det: 10
 
 crop:
-  strategy: "top_confidence"  # top_confidence | all (all dicatat; UI default top_confidence)
+  strategy: "top_confidence" # top_confidence | all (all dicatat; UI default top_confidence)
   padding_ratio: 0.05
   min_size: 8
 

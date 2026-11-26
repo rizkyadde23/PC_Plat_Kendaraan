@@ -130,8 +130,12 @@ image = decode_upload(uploaded) if uploaded is not None else None
 if uploaded is not None and image is None:
     st.error("File gambar tidak dapat dibaca. Pastikan file tidak rusak dan formatnya didukung.")
 
-# Process
+# Process / restore cached result
 result: Optional[PipelineResult] = None
+current_key = None
+if uploaded is not None:
+    current_key = f"{uploaded.name}:{uploaded.size}:{getattr(uploaded, 'file_id', '')}"
+
 if uploaded is not None and image is not None and run:
     with st.spinner("Memproses gambar... mendeteksi plat, preprocessing, dan membaca OCR."):
         try:
@@ -150,9 +154,21 @@ if uploaded is not None and image is not None and run:
                 return_images=True,
             )
             result.meta["input_filename"] = uploaded.name
+            st.session_state["alpro_last_result"] = result
+            st.session_state["alpro_last_result_key"] = current_key
         except Exception as e:
             st.error("Terjadi error saat memproses gambar. Periksa konfigurasi atau model, lalu coba lagi.")
             st.caption(f"Detail teknis: {e}")
+
+# Restore cached result when rerun is triggered by other buttons (e.g. Save Result)
+if result is None and uploaded is not None and image is not None:
+    cached = st.session_state.get("alpro_last_result")
+    cached_key = st.session_state.get("alpro_last_result_key")
+    if cached is not None and cached_key == current_key:
+        result = cached
+elif uploaded is None:
+    st.session_state.pop("alpro_last_result", None)
+    st.session_state.pop("alpro_last_result_key", None)
 
 # Results layout
 if result is not None:
