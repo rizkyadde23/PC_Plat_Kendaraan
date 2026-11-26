@@ -1,29 +1,49 @@
-# Checklist Smoke UI Streamlit — M9 ALPRO
+# Checklist Smoke UI Streamlit — ALPRO
 
-Gunakan checklist ini untuk verifikasi manual UI (`streamlit run app.py`).  
-Status M9: tidak ada klaim metrik OCR kuantitatif tanpa GT terverifikasi.
+Gunakan checklist ini untuk verifikasi manual UI Streamlit setelah redesign final.
 
 ## Persiapan
-- [ ] Aktifkan `.venv` dan jalankan `streamlit run app.py`.
+- [ ] Aktifkan `.venv`.
+- [ ] Jalankan `streamlit run app.py`.
 - [ ] Pastikan `configs/pipeline.yaml` menunjuk ke bobot detektor yang valid.
-- [ ] Siapkan 3 sampel: valid (plat jelas), no-detection known case, file invalid/non-image.
+- [ ] Siapkan 3 sampel: gambar valid (plat jelas), kasus no-detection, file invalid/non-image.
 
-## Skenario Smoke
-- [ ] **Upload valid**: gambar tampil, tombol proses aktif.
-- [ ] **Deteksi**: annotated image tampil; bbox/confidence terlihat di detail deteksi.
-- [ ] **Crop**: crop plat tampil saat deteksi ada.
-- [ ] **Preprocessing**: hasil varian default (`original_crop`) tampil; intermediate bisa di-toggle.
-- [ ] **OCR**: `text_raw`, `text_normalized`, confidence, status tampil.
-- [ ] **No detection**: known case menampilkan status `no_detection` tanpa crash (`IMG-20180108-WA0024...` / `WA0104...`).
-- [ ] **Invalid input**: file rusak/tidak terbaca menampilkan error ramah, app tetap berjalan.
-- [ ] **Save opsional**: jika dicentang, artefak tersimpan ke `outputs/predictions/pipeline/<timestamp>/`.
-- [ ] **Pipeline JSON**: expander menampilkan JSON tanpa image array.
+## Navigasi & Layout
+- [ ] **Home/Landing page** tampil sebagai halaman pertama.
+- [ ] Tombol **Mulai Pembacaan** (hero) membuka halaman Plate Recognition.
+- [ ] Tombol **Start Recognition** (bagian bawah Home) berada di tengah dan membuka Plate Recognition.
+- [ ] Sidebar **tidak tampil**.
+- [ ] Halaman Plate Recognition memiliki tombol **Kembali ke Home** dan **Configuration**.
 
-## Bukti yang Disarankan
-- [ ] Screenshot: input, annotated, crop, preprocessed, hasil OCR.
-- [ ] Screenshot: kasus `no_detection`.
-- [ ] Catat waktu proses/status jika relevan.
+## Configuration Dialog
+- [ ] Dialog terbuka dari tombol **Configuration** di halaman Plate Recognition.
+- [ ] Nilai default tampil sesuai config aktif.
+- [ ] **Save Configuration** menyimpan perubahan dan diterapkan pada proses berikutnya.
+- [ ] **Reset to Default** mengembalikan nilai default.
+- [ ] **Cancel** menutup dialog tanpa menyimpan perubahan draft.
+
+## Plate Recognition
+- [ ] Upload gambar valid menampilkan preview/input dengan baik.
+- [ ] Tombol proses aktif setelah gambar valid dipilih.
+- [ ] Saat proses berjalan, indikator loading tampil.
+- [ ] **Recognition Result** tampil sebagai panel paling dominan.
+- [ ] Hasil OCR, status, OCR confidence, detection confidence, dan jumlah deteksi tampil.
+- [ ] Gambar deteksi (bounding box) tampil proporsional.
+- [ ] Crop plat tampil saat deteksi berhasil.
+- [ ] Hasil preprocessing tampil; langkah intermediate dapat dilihat jika tersedia.
+- [ ] Detail teknis (timing, detections JSON, OCR candidates) tersedia di expander.
+
+## Error/Empty State
+- [ ] **No detection**: status jelas, tidak crash (`IMG-20180108-WA0024...` / `WA0104...` adalah contoh known case).
+- [ ] **Empty OCR**: status jelas, pesan informatif.
+- [ ] **Invalid input**: error ramah, aplikasi tetap bisa digunakan.
+- [ ] Tidak ada traceback mentah yang tampil ke user.
+
+## Save Result (opsional)
+- [ ] Jika opsi simpan aktif, hasil dapat disimpan ke `outputs/predictions/pipeline/<timestamp>/`.
+- [ ] File JSON/gambar hasil tersimpan sesuai ekspektasi.
 
 ## Catatan
-- Hasil OCR adalah prediksi model; **CER/WER/EMA belum diklaim** karena GT OCR terverifikasi belum tersedia.
+- Hasil OCR adalah prediksi model; **CER/WER/Exact Match belum diklaim** tanpa GT terverifikasi.
 - `data/raw/` tidak boleh diubah.
+- Ambil screenshot Home, Recognition Result, detection/crop/preprocess, dan kasus no-detection untuk dokumentasi/demo.
