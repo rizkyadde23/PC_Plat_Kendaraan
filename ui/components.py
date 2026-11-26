@@ -80,8 +80,8 @@ def render_result_panel(result: Dict[str, Any]) -> None:
   <div class="alpro-plate-text">{display_text}</div>
   <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">{badge}</div>
   <div class="alpro-result-meta">
-    <div class="alpro-meta-item"><div class="k">OCR Confidence</div><div class="v">{ocr_conf:.2%}</div></div>
-    <div class="alpro-meta-item"><div class="k">Detection Confidence</div><div class="v">{det_conf:.2%}</div></div>
+    <div class="alpro-meta-item strong"><div class="k">OCR Confidence</div><div class="v">{ocr_conf:.2%}</div></div>
+    <div class="alpro-meta-item strong"><div class="k">Detection Confidence</div><div class="v">{det_conf:.2%}</div></div>
     <div class="alpro-meta-item"><div class="k">Detected Plates</div><div class="v">{len(detections)}</div></div>
     <div class="alpro-meta-item"><div class="k">OCR Status</div><div class="v">{ocr_status}</div></div>
   </div>
@@ -90,13 +90,8 @@ def render_result_panel(result: Dict[str, Any]) -> None:
         unsafe_allow_html=True,
     )
 
-    c1, c2 = st.columns([3, 1])
-    with c1:
-        if text_norm or text_raw:
-            st.caption("Teks normalisasi digunakan sebagai hasil utama; teks mentah OCR ditampilkan di detail.")
-    with c2:
-        if text_norm or text_raw:
-            st.code(text_norm or text_raw, language=None)
+    if text_norm or text_raw:
+        st.caption("Teks normalisasi digunakan sebagai hasil utama; teks mentah OCR ditampilkan di detail.")
 
     if status == "no_detection":
         st.warning("Plat nomor tidak terdeteksi pada gambar ini. Coba gunakan gambar yang lebih jelas, atau sesuaikan confidence threshold di Configuration.")

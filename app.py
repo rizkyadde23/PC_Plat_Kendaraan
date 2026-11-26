@@ -13,7 +13,7 @@ if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
 from ui.state import init_config_state  # noqa: E402
-from ui.styles import inject_css  # noqa: E402
+from ui.styles import inject_css, section_head  # noqa: E402
 
 
 st.set_page_config(
@@ -27,22 +27,21 @@ init_config_state()
 
 
 # Hero
-left, right = st.columns([1.1, 1], gap="large")
+left, right = st.columns([1.1, 1], gap="large", vertical_alignment="center")
 with left:
     st.markdown(
         """
 <div class="alpro-hero">
   <div class="alpro-hero-badge">AI Computer Vision Application</div>
-  <h1>Smart Indonesian <span class="accent">License Plate</span> Recognition</h1>
+  <h1><span class="accent">ALPRO</span>-Automatic License Plate Recognition Online</h1>
   <p>Deteksi, proses, dan baca plat nomor kendaraan Indonesia secara otomatis menggunakan Computer Vision dan Optical Character Recognition.</p>
 </div>
 """,
         unsafe_allow_html=True,
     )
-    st.markdown('<div class="alpro-big-btn" style="max-width:320px;">', unsafe_allow_html=True)
-    if st.button("Mulai Pembacaan", type="primary", use_container_width=True, icon=":material/arrow_forward:"):
-        st.switch_page("pages/1_Plate_Recognition.py")
-    st.markdown("</div>", unsafe_allow_html=True)
+    with st.container(key="bigbtn-hero"):
+        if st.button("Mulai Pembacaan", type="primary", use_container_width=True, icon=":material/arrow_forward:"):
+            st.switch_page("pages/1_Plate_Recognition.py")
     st.markdown(
         '<div class="alpro-muted-text" style="margin-top:0.65rem;">Upload gambar kendaraan dan dapatkan hasil OCR secara otomatis.</div>',
         unsafe_allow_html=True,
@@ -55,14 +54,14 @@ with right:
   <div class="alpro-visual-frame">
     <div class="alpro-visual-car">
       <div style="text-align:center;">
-        <div style="font-size:0.85rem;color:#64748B;">Vehicle Image</div>
-        <div style="font-size:0.75rem;color:#94A3B8;margin-top:0.25rem;">YOLO detection area</div>
+        <div style="font-size:0.9rem;color:#64748B;">Vehicle Image</div>
+        <div style="font-size:0.8rem;color:#94A3B8;margin-top:0.25rem;">YOLO detection area</div>
       </div>
       <div class="alpro-bbox"><span class="alpro-bbox-label">License Plate</span></div>
     </div>
     <div class="alpro-visual-result">
       <div>
-        <div style="font-size:0.72rem;color:#64748B;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;">Illustration Preview</div>
+        <div style="font-size:0.75rem;color:#64748B;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;">Illustration Preview</div>
         <div class="plate">PLATE • OCR</div>
       </div>
       <div class="status">Illustration</div>
@@ -73,17 +72,16 @@ with right:
         unsafe_allow_html=True,
     )
 
-st.markdown("<div style='height:1.5rem'></div>", unsafe_allow_html=True)
+st.markdown("<div style='height:2.5rem'></div>", unsafe_allow_html=True)
 
 # About
-st.markdown('<div class="alpro-section-title">Tentang Aplikasi</div>', unsafe_allow_html=True)
-st.markdown("## Apa itu ALPRO?")
+section_head("Tentang Aplikasi", "Apa itu ALPRO?")
 a1, a2 = st.columns([1.2, 1], gap="large")
 with a1:
     st.markdown(
         """
-<div class="alpro-card">
-  <p style="margin:0;color:#334155;line-height:1.8;">
+<div class="alpro-card" style="height:100%;">
+  <p style="margin:0;color:#334155;line-height:1.8;font-size:1.05rem;">
     <strong>ALPRO (Automatic License Plate Recognition Online)</strong> adalah aplikasi pengenalan plat nomor kendaraan Indonesia
     yang menggabungkan <strong>Object Detection</strong> dan <strong>Optical Character Recognition (OCR)</strong>.
     Sistem mendeteksi lokasi plat nomor pada gambar kendaraan, memproses area plat, lalu membaca karakter yang terdapat di dalamnya.
@@ -95,8 +93,8 @@ with a1:
 with a2:
     st.markdown(
         """
-<div class="alpro-card-soft">
-  <div style="font-weight:700;color:#0F172A;margin-bottom:0.5rem;">Manfaat utama</div>
+<div class="alpro-card-soft" style="height:100%;">
+  <div style="font-weight:700;font-size:1.1rem;color:#0F172A;margin-bottom:0.5rem;">Manfaat utama</div>
   <div class="alpro-muted-text">• Membantu membaca plat nomor dari gambar kendaraan.<br>
   • Menampilkan tahapan proses secara transparan.<br>
   • Memberikan hasil OCR beserta confidence dan status pemrosesan.</div>
@@ -105,12 +103,14 @@ with a2:
         unsafe_allow_html=True,
     )
 
-st.markdown("<div style='height:0.5rem'></div>", unsafe_allow_html=True)
+st.markdown("<div style='height:2.5rem'></div>", unsafe_allow_html=True)
 
 # How it works
-st.markdown('<div class="alpro-section-title">Alur Kerja</div>', unsafe_allow_html=True)
-st.markdown("## How It Works")
-st.caption("Pipeline ALPRO memproses gambar dari upload hingga hasil pembacaan teks plat.")
+section_head(
+    "Alur Kerja",
+    "How It Works",
+    "Pipeline ALPRO memproses gambar dari upload hingga hasil pembacaan teks plat.",
+)
 steps = [
     ("1", "Upload Image", "Pengguna mengunggah gambar kendaraan. Sistem memvalidasi format dan membaca gambar.", ""),
     ("2", "Plate Detection", "Model YOLO mendeteksi area plat nomor dan menghasilkan bounding box.", ""),
@@ -132,11 +132,10 @@ for col, (num, title, desc, icon_cls) in zip(cols, steps):
             unsafe_allow_html=True,
         )
 
-st.markdown("<div style='height:1.5rem'></div>", unsafe_allow_html=True)
+st.markdown("<div style='height:2.5rem'></div>", unsafe_allow_html=True)
 
 # Technology
-st.markdown('<div class="alpro-section-title">Teknologi</div>', unsafe_allow_html=True)
-st.markdown("## Technology Stack")
+section_head("Teknologi", "Technology Stack")
 tech = [
     ("Python", "Bahasa utama untuk pipeline, integrasi model, dan aplikasi."),
     ("YOLO", "Mendeteksi lokasi plat nomor pada gambar kendaraan."),
@@ -157,13 +156,13 @@ for col, (name, desc) in zip(tcols, tech):
             unsafe_allow_html=True,
         )
 
-st.markdown("<div style='height:2rem'></div>", unsafe_allow_html=True)
+st.markdown("<div style='height:3rem'></div>", unsafe_allow_html=True)
 
 # CTA
 st.markdown(
     """
 <div class="alpro-cta">
-  <div class="alpro-section-title" style="justify-content:center;">Mulai Sekarang</div>
+  <div class="alpro-section-title">Mulai Sekarang</div>
   <h2>Ready to Recognize a License Plate?</h2>
   <p>Upload gambar kendaraan dan biarkan ALPRO memproses plat nomor secara otomatis.</p>
 </div>
@@ -171,10 +170,9 @@ st.markdown(
     unsafe_allow_html=True,
 )
 st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
-st.markdown('<div class="alpro-big-btn alpro-center-cta">', unsafe_allow_html=True)
-if st.button("Start Recognition", type="primary", use_container_width=True, icon=":material/document_scanner:", key="cta_bottom"):
-    st.switch_page("pages/1_Plate_Recognition.py")
-st.markdown("</div>", unsafe_allow_html=True)
+with st.container(key="bigbtn-cta"):
+    if st.button("Start Recognition", type="primary", use_container_width=True, icon=":material/document_scanner:", key="cta_bottom"):
+        st.switch_page("pages/1_Plate_Recognition.py")
+st.divider()
 
-st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
 st.caption("ALPRO • White Modern AI Interface • Prediksi OCR bukan klaim akurasi ground truth.")
